@@ -6,7 +6,7 @@ source(file="~/evo-dispersal/Quoll_model/Quoll_model_functions.R", echo=F)
 #set the working directory
 setwd("~/Documents/PhD/Figures")
 
-mother<-function(n=2000, alpha=-3, fsurv1=0.4, fsurv2=0.1, msurv=0.1, init.b=0, init.p.var=10, h=0.3, gens=10, K=20, fec=4, beta=7, prob.d=0.1, sel.time=10, plot=FALSE){
+mother<-function(n=100, alpha=3, fsurv1=0.4, fsurv2=0.1, msurv=0.1, init.b=0, init.p.var=10, h=0.3, gens=20, K=20, fec=4, beta=7, prob.d=0.1, sel.time=10, plot=FALSE){
 	pop<-init.inds(n, init.b, init.p.var, h) # create a population
 	popsize<-n
 	sel<-FALSE
