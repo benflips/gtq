@@ -50,7 +50,7 @@ repro<-function(popmat, spX, spY, fec, init.p.var, h){
 	b.var<-h*init.p.var
 	if (length(popmat[,1])==0) return(popmat)
 	# collect breeding females and their mates' B values
-	male<-subset(popmat, popmat[,"S"]==1)
+	male<-subset(popmat, popmat[,"S"]==1 & popmat[,"A"]>0)
 	if (length(male)==0) return(popmat)
 	male<-table(factor(male[,"X"], levels=1:spX), factor(male[,"Y"], levels=1:spY)) #number of males present in each cell
 	b.list<-b.list.maker(popmat, spX, spY) #list male Bs by space

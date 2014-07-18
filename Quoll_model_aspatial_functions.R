@@ -33,8 +33,8 @@ b.list.maker<-function(popmat, spX, spY){
 
 
 #generalised density dependent decay (where alpha < 0) 
-ddep<-function(alpha, beta, Nt){
-	1/(1+exp(alpha*(Nt-beta)))	
+ddep<-function(beta, Nt){
+	1/(1+exp(3*(Nt-beta)))	
 }
 
 #function to sample across a list
@@ -46,12 +46,12 @@ sample2<-function(v){
 
 #function that reproduces individuals
 
-install.packages("survival")
-library(survival)
+#install.packages("survival")
+#library(survival)
 
 # takes population matrix
 repro<-function(popmat, fec, init.p.var, h, alpha){
-	b.var<-(h*init.p.var)
+	b.var<-h*init.p.var
 	if (length(popmat[,1])==0) return(popmat) #if all dead then don't bother
 # collect breeding females and their mates' B values
 	male<-subset(popmat, popmat[,"S"]==1 & popmat[,"A"]>0) #matrix of all breeding males
@@ -62,45 +62,45 @@ repro<-function(popmat, fec, init.p.var, h, alpha){
 	mat<-list(femB, malB) #bind
 	mat<-sapply(mat, '[', seq(min(sapply(mat,length)))) # crop parent breeding values to min length
 # calc no. of offspring per couple
-	off.no<- rpois(lenght(mat), fec) # no. offspring per couple
-	B.off<-(mat[,1]+mat[,2])/2
-	osurv<- depp(alpha, beta, off.no)
-	parents <- cbind(mat, off.no, B.off, osurv) #parent breeding values, offspring no., mid parent values, offspring survival prob
+	B.off<-(mat[,1]+mat[,2])/2 #mid parent breeding values
+	off.no<- rpois(length(mat), fec) # no. offspring per couple (stochastic around expected fecundity)
+	off.no.num<- data.matrix(off.no, rownames.force = NA)	
+	osurv<- ddep(beta, off.no.num) # offspring survival prob
+	parents <- cbind(mat, B.off, osurv) #parent breeding values, offspring no., mid parent values, offspring survival prob
 #create offspring
-	
-	E<-rpois(length(B.off), fec) #stochastic around expected fecundity
-	X<-rep(female[,"X"], each=E)
-	
-	
-	
-	
-	#times females by stochastic around expected fecundity
-	
-	
-	B.off<-(mat[,1]+mat[,2])/2 #calc mid-parent value 
-	
-	#don't need this line? B.off<- rnorm(length(B.off), B.off, (b.var/2)^0.5) #variance in offspring b values ## mistake? might need to be fixed. 
-	
-	E<-rpois(length(B.off), fec) #stochastic around expected fecundity
-	E<- subset(E<8) #carrying capacity=8
-	off<- cbind(B.off, E)
-	#osurv<- survfit(B.off~1/(1+exp(3*(E-7))), data=off)
-	#off<- subset(off[,E>0])
-	#osurv<- ddep(alpha, beta, E)
-	#off<- subset(osurv>1)
-	#if E>6 osurv<- ddep(alpha, beta, E)
-	B1<-rep(B.off, each=E)
-	#osurv<- ddep(alpha, beta, E) 
-	#osurv<- ddep(alpha, beta, E) #density dependant offspring survival depending on fec
-	#off<-subset(osurv, rbinom(length(E[,1]), 1, osurv)==1) # gather surviving offspring
-	S<-rbinom(length(B1), 1, 0.5) # random sex allocation
-	A<-rep(0, length(B1))	# age=0
-	B<-rnorm(length(B1), B1, (b.var/2)^0.5) #offspring breeding values = female B.off* b.var # Needs to have variation within familes
+	off<-rep(parents, each=off.no) #replicate B.off and osurv for no of offspring per parent
+	off<- subset(off, osurv>0) # get rid of dead ones
+	B<- rnorm(length(off), off[,"B.off"], (b.var/2)^0.5) # variation in B values
+	S<-rbinom(length(off), 1, 0.5) # random sex allocation
+	A<-rep(0, length(off))	# age=0
 	P<-rnorm(length(B), B, (init.p.var-b.var)^0.5)
 	off<-cbind(S, A, B, P)
 	popmat<-rbind(popmat, off)
 	popmat
 }
+
+	##PROBLEM: non-numeric argument for ddep formula
+	#don't need this line? B.off<- rnorm(length(B.off), B.off, (b.var/2)^0.5) #variance in offspring b values ## mistake? might need to be fixed. 
+	
+	#E<- subset(E<8) #carrying capacity=8
+	#off<- cbind(B.off, E)
+	#osurv<- survfit(B.off~1/(1+exp(3*(E-7))), data=off)
+	#off<- subset(off[,E>0])
+	#osurv<- ddep(alpha, beta, E)
+	#off<- subset(osurv>1)
+	#if E>6 osurv<- ddep(alpha, beta, E)
+	#B1<-rep(B.off, each=E)
+	#osurv<- ddep(alpha, beta, E) 
+	#osurv<- ddep(alpha, beta, E) #density dependant offspring survival depending on fec
+	#off<-subset(osurv, rbinom(length(E[,1]), 1, osurv)==1) # gather surviving offspring
+	#S<-rbinom(length(B1), 1, 0.5) # random sex allocation
+	#A<-rep(0, length(B1))	# age=0
+	#B<-rnorm(length(B1), B1, (b.var/2)^0.5) #offspring breeding values = female B.off* b.var # Needs to have variation within familes
+	#P<-rnorm(length(B), B, (init.p.var-b.var)^0.5)
+	#off<-cbind(S, A, B, P)
+	#popmat<-rbind(popmat, off)
+	#popmat
+#}
 
 
 # runs the male die off
