@@ -22,14 +22,14 @@ fit.func<-function(P){
 
 ####DONT NEED ####
 #function that creates a list of vectors of male breeding values for each grid cell
-b.list.maker<-function(popmat, spX, spY){
-	male<-subset(popmat, popmat[,"S"]==1 & popmat[,"A"]>0)
-	out<-vector("list", spX*spY)
-	for (i in 1:length(male[,1])){
-		out[[(male[i,"Y"]-1)*spX+male[i,"X"]]]<-c(out[[(male[i,"Y"]-1)*spX+male[i,"X"]]], male[i,"B"])
-	}	
-	out
-}
+#b.list.maker<-function(popmat, spX, spY){
+#	male<-subset(popmat, popmat[,"S"]==1 & popmat[,"A"]>0)
+#	out<-vector("list", spX*spY)
+#	for (i in 1:length(male[,1])){
+#		out[[(male[i,"Y"]-1)*spX+male[i,"X"]]]<-c(out[[(male[i,"Y"]-1)*spX+male[i,"X"]]], male[i,"B"])
+#	}	
+#	out
+#}
 
 
 #generalised density dependent decay (where alpha < 0) 
@@ -62,15 +62,30 @@ repro<-function(popmat, fec, init.p.var, h, alpha){
 	mat<-list(femB, malB) #bind
 	mat<-sapply(mat, '[', seq(min(sapply(mat,length)))) # crop parent breeding values to min length
 # calc no. of offspring per couple
-	B.off<-(mat[,1]+mat[,2])/2 #mid parent breeding values
+	B<-(mat[,1]+mat[,2])/2
 	off.no<- rpois(length(mat), fec) # no. offspring per couple (stochastic around expected fecundity)
-	off.no.num<- data.matrix(off.no, rownames.force = NA)	
-	osurv<- ddep(beta, off.no.num) # offspring survival prob
-	parents <- cbind(mat, B.off, osurv) #parent breeding values, offspring no., mid parent values, offspring survival prob
-#create offspring
-	off<-rep(parents, each=off.no) #replicate B.off and osurv for no of offspring per parent
-	off<- subset(off, osurv>0) # get rid of dead ones
-	B<- rnorm(length(off), off[,"B.off"], (b.var/2)^0.5) # variation in B values
+	#if off.no>6 return off.no=6
+	#parents<- cbind(B, off.no)
+	
+	len<- sum(off.no) #sum of total offspring
+	#index<- rep(0, each=sum)
+	#index<- cumsum(index, rep(1:end-1)
+	
+	#index <- zeros(1,sum(off.no))
+	#index(cumsum([1 rep(1:end-1)])) = 1
+	#index <- cumsum(index)
+	#off <- B(index)
+	
+	
+	off<-rep(B, times=off.no, length.out=len) #replicate B for no. of offspring per parent (length is sum of off.no)
+	#N<- rep(off[off.no], length(B))
+	
+	#sur<- cbind(off, N)
+	#osurv<-sapply(sur, ddep(alpha, beta, N))	
+	#off<-subset(off, rbinom(length(off[,1]), 1, osurv)==1) # probabilistic survival
+
+	
+	B<-rnorm(length(off), B, (b.var/2)^0.5) #mid parent breeding values with vairance
 	S<-rbinom(length(off), 1, 0.5) # random sex allocation
 	A<-rep(0, length(off))	# age=0
 	P<-rnorm(length(B), B, (init.p.var-b.var)^0.5)
@@ -78,7 +93,20 @@ repro<-function(popmat, fec, init.p.var, h, alpha){
 	popmat<-rbind(popmat, off)
 	popmat
 }
-
+	 
+#discarded script
+	#osurv<-1/(1+exp(3*(off.no[,"1"]-7)	
+	#parents <- cbind(B, off.no) #parent breeding values, offspring no., mid parent values, offspring survival prob
+	#off<-subset(parents, rbinom(length(parents[,1]), 1, osurv)==1) #surviving juveniles
+	
+	#off.no.num<- data.matrix(off.no, rownames.force = NA)	
+	#osurv<- ddep(beta, off.no.num) # offspring survival prob
+	#if (off.no > 8){ sur = 1/off.no} else if (off.no<8) {sur=1} #sur = survival probability 
+#create offspring
+	#off<-rep(parents, each=off.no) #replicate B.off and osurv for no of offspring per parent
+	#off<- subset(off, osurv>0) # get rid of dead ones
+	
+	
 	##PROBLEM: non-numeric argument for ddep formula
 	#don't need this line? B.off<- rnorm(length(B.off), B.off, (b.var/2)^0.5) #variance in offspring b values ## mistake? might need to be fixed. 
 	
@@ -113,7 +141,7 @@ mdieoff<-function(popmatrix, msurv){
 }
 
 #ages or kills individuals based on age-specific survival plus fitness
-age<-function(popmatrix, selection=F, alpha, fsurv1, fsurv2, msurv, beta, K){
+age<-function(popmatrix, selection=F, alpha, fsurv1, fsurv2, jsurv, msurv, beta, K){
 	if (length(popmatrix[,1])==0) return(popmatrix)
 	#Survival of adults
 	Ad<-subset(popmatrix, popmatrix[,"A"]>0) #Grabs all adults
@@ -125,16 +153,19 @@ age<-function(popmatrix, selection=F, alpha, fsurv1, fsurv2, msurv, beta, K){
 	Ad<-subset(Ad, rbinom(length(Ad[,1]), 1, psurv)==1) # probabilistic survival
 	#Survival of juvs (density dependent)
 	Juv<-subset(popmatrix, popmatrix[,"A"]==0)
+	psurv<- rep(0, length(Juv[,1]))
+	psurv[which(Juv[,"A"]==0)]<-jsurv
+	Juv<-subset(Juv, rbinom(length(Juv[,1]), 1, psurv)==1) # probabilistic survival
 	#no Juv survival added - die off according to density in repro 
-	
+	#density<- nrow(Juv)
 	#turn off density dep
 	#density<-table(factor(Ad[,"X"], levels=1:spX), factor(Ad[,"Y"], levels=1:spY)) # adult density through space
 	#density<-density+table(factor(Juv[,"X"], levels=1:spX), factor(Juv[,"Y"], levels=1:spY)) #plus juvenile density
 	#density<-density/K # Density is measured relative to carrying capacity/habitat size
 	#temp<-(Juv[,"Y"]-1)*spX+Juv[,"X"] #matrix indexes for density matrix
-	psurv<-ddep(alpha, beta, Juv) #juvenile survival
-	if (selection==T) psurv<-psurv*fit.func(Juv[,"P"]) #toad relative fitness
-	Juv<-subset(Juv, rbinom(length(Juv[,1]), 1, psurv)==1) #surviving juveniles
+	#psurv<-ddep(alpha, beta, density[,1]) #juvenile survival
+	#if (selection==T) psurv<-psurv*fit.func(Juv[,"P"]) #toad relative fitness
+	#Juv<-subset(Juv, rbinom(length(Juv[,1]), 1, psurv)==1) #surviving juveniles
 	# gather survivors, age them and return
 	popmatrix<-rbind(Ad, Juv)
 	popmatrix[,"A"]<-popmatrix[,"A"]+1
@@ -214,7 +245,7 @@ small.mother<-function(spX=1, spY=1, alpha, fsurv1, fsurv2, msurv, beta, K, fec,
 	pop.as[,"X"]<-2 #start all founders at (2,1)
 	pop.as[1:34,"S"]<-0
 	pop.as[35:45, "S"]<-1
-	popsize.as<-45 #to collect outputs
+	popsize.as<-45 #to collect ouztputs
 	sex.rat.as<-34/11
 	K.as<-1265/spX.as
 	n.list.as<-neighbours.init(spX=spX.as, spY)
