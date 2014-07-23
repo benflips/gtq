@@ -20,39 +20,43 @@ fit.func<-function(P){
 	P>0
 }
 
-#generalised density dependent decay of offspring
+
+
+#generalised density dependent decay of offspring 
 ddep<-function(x){
-	1/(1+exp(3*(x-7)))	
+	1/(1+exp(1*(x-4)))	
 } 
+
+#function to sample across a list
+sample2<-function(v){
+	if (is.null(v)==T) return(NULL)
+	else sample(v, 1, T)	
+}
 
 #function that reproduces individuals
 
 # takes population matrix
-repro<-function(popmat, fec, init.p.var, h, alpha){
+repro<-function(popmat, fec, init.p.var, h, alpha, beta){
 	b.var<-h*init.p.var
 	if (length(popmat[,1])==0) return(popmat) #if all dead then don't bother
 # collect breeding females and their mates' B values
 	male<-subset(popmat, popmat[,"S"]==1 & popmat[,"A"]>0) #matrix of all breeding males
 	if (length(male)==0) return(popmat) #if are none then don't bother
 	female<-subset(popmat, popmat[,"S"]==0 & popmat[,"A"]>0) #matrix of all adult females
-	femB<- female[,c("B")] #extract fem breeding values
-	malB<- male[,c("B")] #extract male breeding values
-	mat<-list(femB, malB) #bind
-	mat<-sapply(mat, '[', seq(min(sapply(mat,length)))) # crop parent breeding values to min length
-# calc no. of offspring per couple and their survival (density dependant)
-	B<-(mat[,1]+mat[,2])/2
-	off.no<- rpois(length(mat), fec) # no. offspring per couple (stochastic around expected fecundity)
-	osurv<- lapply(off.no, ddep) #density dep survival (off.no determines off survival prob)
-	len<- sum(off.no) #sum of total offspring
-	B<-rep(B, times=off.no, length.out=len) #replicate B for no. of offspring per parent (length is sum of off.no)
-	osurv<- rep(osurv, times=off.no, length.out=len) #replicate osurv for no. of offspring per parent
-	B<-subset(B, rbinom(length(B[,"1"]), 1, osurv)==1) #surviving juveniles
-# collect surviving offspring 
-	B<-rnorm(length(Juv), Juv, (b.var/2)^0.5) #mid parent breeding values with variance of surviving offspring
-	S<-rbinom(length(B), 1, 0.5) # random sex allocation
-	A<-rep(0, length(B))	# age=0
+	B.off<-sample(male[,"B"], length(female), replace=T) #sample a male for each female (replace=T)
+	#if (length(B.off)!=length(female[,"B"])) print("error")#browser() #error catcher!
+	B<-(B.off+female[,"B"])/2 #calculate offspring breeding values and cbind (midparent value)
+	off.no<- rpois(length(B), fec) # no. offspring per couple (stochastic around expected fecundity)
+	osurv<- sapply(off.no, ddep) #density dep survival (off.no determines off survival prob)
+	B<-rep(B, off.no) #replicate midparent breeding values by the number of offspring each had
+	N<-rep(osurv, off.no) #replicate osurv for no. of offspring per parent
+	B<-rnorm(length(B), B, (b.var/2)^0.5) #mid parent breeding values with variance of surviving offspring
+	A<-rep(0, length(B)) # age=0
+	S<-rbinom(length(A), 1, prob=0.5) # random sex allocation
 	P<-rnorm(length(B), B, (init.p.var-b.var)^0.5) #phenotypic variation
-	off<-cbind(S, A, B, P)
+	off<-cbind(S, A, B, P, N) 
+	sur<- subset(off, rbinom(length(off[,1]), 1, prob=off[,5])==1) #selects surviving offspring based on prob 
+	off<- sur[, c("S", "A", "B", "P")] #cut out N
 	popmat<-rbind(popmat, off)
 	popmat
 }
