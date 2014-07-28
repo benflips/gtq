@@ -1,0 +1,1 @@
+n	mean	sd	Study22	7.3	0.93	Oakwood 200021	6.4	0.55	Begg 198113	6.1	0.9	Begg 19815	4.4	1.6	Begg 19819	6.1	1.1	Schmitt 198922	7.8	0.2	Schmitt 19894	6.3	1.1	Schmitt 19892	9	1.4	Braithwaite and Griffiths 199413	6.7	1.6	Braithwaite and Griffiths 199410	7.5	0.5	Braithwaite and Griffiths 19944	5.5	1.9	Braithwaite and Griffiths 199439	7.6	0.8	Braithwaite and Griffiths 1994
