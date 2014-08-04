@@ -20,12 +20,16 @@ fit.func<-function(P){
 	P>0
 }
 
-
-
 #generalised density dependent decay of offspring 
-ddep<-function(x){
-	1/(1+exp(1*(x-4)))	
-} 
+#ddep<-function(x){
+#	(1-0.1)/((1)+exp(1*(x-2000)))+0.01
+	#} 
+	
+bev.holt<-function(N, R, K){
+ a<-(R-1)/K
+ R/(1+a*N)
+}  
+
 
 #function to sample across a list
 sample2<-function(v){
@@ -47,16 +51,13 @@ repro<-function(popmat, fec, init.p.var, h, alpha, beta){
 	#if (length(B.off)!=length(female[,"B"])) print("error")#browser() #error catcher!
 	B<-(B.off+female[,"B"])/2 #calculate offspring breeding values and cbind (midparent value)
 	off.no<- rpois(length(B), fec) # no. offspring per couple (stochastic around expected fecundity)
-	osurv<- sapply(off.no, ddep) #density dep survival (off.no determines off survival prob)
+	off.no<- bev.holt(nrow(popmat), off.no, 2000)
 	B<-rep(B, off.no) #replicate midparent breeding values by the number of offspring each had
-	N<-rep(osurv, off.no) #replicate osurv for no. of offspring per parent
 	B<-rnorm(length(B), B, (b.var/2)^0.5) #mid parent breeding values with variance of surviving offspring
 	A<-rep(0, length(B)) # age=0
 	S<-rbinom(length(A), 1, prob=0.5) # random sex allocation
 	P<-rnorm(length(B), B, (init.p.var-b.var)^0.5) #phenotypic variation
-	off<-cbind(S, A, B, P, N) 
-	sur<- subset(off, rbinom(length(off[,1]), 1, prob=off[,5])==1) #selects surviving offspring based on prob 
-	off<- sur[, c("S", "A", "B", "P")] #cut out N
+	off<-cbind(S, A, B, P) 
 	popmat<-rbind(popmat, off)
 	popmat
 }
@@ -83,11 +84,10 @@ age<-function(popmatrix, selection=F, alpha, fsurv1, fsurv2, jsurv, msurv, beta,
 	if (selection==T) psurv<-psurv*fit.func(Ad[,"P"]) #toad relative fitness
 	Ad<-subset(Ad, rbinom(length(Ad[,1]), 1, psurv)==1) # probabilistic survival
 #Survival of juvs (not density dependent)
-	Juv<-subset(popmatrix, popmatrix[,"A"]==0)
-	psurv<- rep(0, length(Juv[,1]))
-	psurv[which(Juv[,"A"]==0)]<-jsurv #juvenile survival probability (supposedly quite high)
-	if (selection==T) psurv<-psurv*fit.func(Juv[,"P"]) #toad relative fitness
-	Juv<-subset(Juv, rbinom(length(Juv[,1]), 1, psurv)==1) # probabilistic survival
+	Juv<-subset(popmatrix, popmatrix[,"A"]==0) #Grabs little ones
+	jsurv<- 1 #all survive
+	if (selection==T) jsurv<-jsurv*fit.func(Juv[,"P"]) #toad relative fitness
+	Juv<- subset(Juv, rbinom(length(Juv[,1]), 1, prob=jsurv)==1) #selects surviving offspring based on prob 
 # gather survivors, age them and return
 	popmatrix<-rbind(Ad, Juv)
 	popmatrix[,"A"]<-popmatrix[,"A"]+1
