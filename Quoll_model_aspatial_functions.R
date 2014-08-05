@@ -50,8 +50,9 @@ repro<-function(popmat, fec, init.p.var, h, alpha, beta){
 	B.off<-sample(male[,"B"], length(female), replace=T) #sample a male for each female (replace=T)
 	#if (length(B.off)!=length(female[,"B"])) print("error")#browser() #error catcher!
 	B<-(B.off+female[,"B"])/2 #calculate offspring breeding values and cbind (midparent value)
-	off.no<- rpois(length(B), fec) # no. offspring per couple (stochastic around expected fecundity)
-	off.no<- bev.holt(nrow(popmat), off.no, 2000)
+	off.no<- bev.holt(length(female), fec, 2000) 
+	off.no<- rpois(length(off.no), off.no) 
+	print(off.no)
 	B<-rep(B, off.no) #replicate midparent breeding values by the number of offspring each had
 	B<-rnorm(length(B), B, (b.var/2)^0.5) #mid parent breeding values with variance of surviving offspring
 	A<-rep(0, length(B)) # age=0

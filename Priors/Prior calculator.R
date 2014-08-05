@@ -1,8 +1,9 @@
-setwd("/Users/ben/Documents/Papers/EvoPVA/Quoll model R/Priors")
+setwd("/Users/ellakelly/Documents/PhD/gtq/Priors")
 
 
 #litter size
 d<-read.table("Litter size.txt", header=T, sep="\t")
+mean(d$mean)
 
 # mean=6.725
 # sd = 1.206140

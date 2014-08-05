@@ -2,6 +2,9 @@
 
 ###Note: execution of quantitative genetics is (badly) incorrect and needs to be fixed before evolutionary scenarios can be implemented
 
+#### Ella edited
+
+
 # Initialises a matrix with n individuals
 # individuals have a location (spX, spY) and are generated from
 # initial mean breeding value, initial variance in breeding value, and heritability
@@ -33,8 +36,8 @@ b.list.maker<-function(popmat, spX, spY){
 }
 
 #generalised density dependent decay (where alpha < 0)
-ddep<-function(alpha, beta, Nt){
-	1/(1+exp(-alpha*(Nt-beta)))	
+ddep<-function(Nt, beta){
+	1/(1+exp(1*(Nt-beta)))	
 }
 
 #function to sample across a list
@@ -64,12 +67,17 @@ repro<-function(popmat, spX, spY, fec, init.p.var, h){
 	B.off<-rnorm(length(B.off), B.off, (b.var/2)^0.5) #variance in offspring b values ## mistake? might need to be fixed.
 	female<-cbind(female, B.off)
 	# calculate number of offspring for each female and create an offspring matrix 
-	E<-rpois(length(B.off), fec) #stochastic around expected fecundity
-	X<-rep(female[,"X"], each=E)
-	Y<-rep(female[,"Y"], each=E)
+	#leng<- as.numeric(length(female))
+	#dd.off<-ddep(Nt= leng, beta)
+	#off.no<- rbinom(length(female), 8, dd.off) 
+	
+	
+	B<-rep(B.off, off.no) #replicate midparent breeding values by the number of offspring each had
+	B<-rnorm(length(B), B, (b.var/2)^0.5) #mid parent breeding values with variance of surviving offspring
+	X<-rep(female[,"X"], each=B)
+	Y<-rep(female[,"Y"], each=B)
 	S<-rbinom(length(X), 1, 0.5) # random sex allocation
 	A<-rep(0, length(X))	# age=0
-	B<-rep(female[,"B.off"], each=E) #offspring breeding values # Needs to have variation within familes
 	P<-rnorm(length(B), B, (init.p.var-b.var)^0.5) #offspring phenotypes
 	off<-cbind(X, Y, S, A, B, P)
 	popmat<-rbind(popmat, off)
@@ -103,8 +111,7 @@ age<-function(popmatrix, selection=F, alpha, fsurv1, fsurv2, msurv, spX, spY, be
 	density<-density/K # Density is measured relative to carrying capacity/habitat size
 	temp<-(Juv[,"Y"]-1)*spX+Juv[,"X"] #matrix indexes for density matrix
 	psurv<-ddep(alpha, beta, density[temp]) #juvenile survival
-	
-print(density[temp])
+	print(density[temp])
 	if (selection==T) psurv<-psurv*fit.func(Juv[,"P"]) #toad relative fitness
 	Juv<-subset(Juv, rbinom(length(Juv[,1]), 1, psurv)==1) #surviving juveniles
 	# gather survivors, age them and return
