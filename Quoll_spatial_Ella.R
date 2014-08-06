@@ -36,20 +36,19 @@ b.list.maker<-function(popmat, spX, spY){
 }
 
 #generalised density dependent decay (where alpha < 0)
-ddep<-function(Nt, beta){
-	1/(1+exp(1*(Nt-beta)))	
+ddep1<- function(x, beta, alpha) {
+	1/(1+exp(-alpha*(x-beta)))
 }
 
 #function to sample across a list
 sample2<-function(v){
 	if (is.null(v)==T) return(NULL)
 	else sample(v, 1, T)	
-}
-
+}r
 
 #function that reproduces individuals
 # takes population matrix
-repro<-function(popmat, spX, spY, fec, init.p.var, h){
+repro<-function(popmat, spX, spY, fec, init.p.var, h, alpha, beta){
 	b.var<-h*init.p.var
 	if (length(popmat[,1])==0) return(popmat)
 	# collect breeding females and their mates' B values
@@ -63,19 +62,32 @@ repro<-function(popmat, spX, spY, fec, init.p.var, h){
 	temp<-temp[which(male[temp]>0)] #update temp
 	B.off<-unlist(lapply(b.list[temp], sample2)) #sample a male for each female (replace=T)
 	if (length(B.off)!=length(female[,"B"])) print("error")#browser() #error catcher!
-	B.off<-(B.off+female[,"B"])/2 #calculate offspring breeding values and cbind (midparent value)
-	B.off<-rnorm(length(B.off), B.off, (b.var/2)^0.5) #variance in offspring b values ## mistake? might need to be fixed.
-	female<-cbind(female, B.off)
-	# calculate number of offspring for each female and create an offspring matrix 
-	#leng<- as.numeric(length(female))
-	#dd.off<-ddep(Nt= leng, beta)
-	#off.no<- rbinom(length(female), 8, dd.off) 
+	B.off<-(B.off+female[,"B"])/2 #calculate midparent value	
+	female<- cbind(B.off, female)
+	f<-table(factor(female[,"X"], levels=1:spX), factor(female[,"Y"], levels=1:spY))
+	dd.off<- ddep1(x=f, beta, alpha)
+	off.no<-rbinom(length(f), 8, dd.off)
+	off.no<- as.integer(off.no)
+print(off.no)	
+	#off.no<- is.vector(off.no, mode="integer")
+	#off.no<-matrix(off.no, nrow=10, ncol=10)	
+	#off.no<-as.vector(off.no)
+	#Y<-rep(1:10, times=10)
+	#X<-rep(1:10, each=10)
+	#off.no<-cbind(off.no, X, Y)
+	#ind<-rep(off.no, times=f.no)
+	#all<-cbind(female, off.no)
+#print(all)
+	B<- rep(female, off.no)
+
+#print(female)
+	#B<-rep(B.off, off.no) #replicate midparent breeding values by the number of offspring each had
+#print(B)
 	
-	
-	B<-rep(B.off, off.no) #replicate midparent breeding values by the number of offspring each had
 	B<-rnorm(length(B), B, (b.var/2)^0.5) #mid parent breeding values with variance of surviving offspring
-	X<-rep(female[,"X"], each=B)
-	Y<-rep(female[,"Y"], each=B)
+#print(B)
+	X<-rep(female[,"X"], B)
+	Y<-rep(female[,"Y"], B)
 	S<-rbinom(length(X), 1, 0.5) # random sex allocation
 	A<-rep(0, length(X))	# age=0
 	P<-rnorm(length(B), B, (init.p.var-b.var)^0.5) #offspring phenotypes
@@ -111,7 +123,6 @@ age<-function(popmatrix, selection=F, alpha, fsurv1, fsurv2, msurv, spX, spY, be
 	density<-density/K # Density is measured relative to carrying capacity/habitat size
 	temp<-(Juv[,"Y"]-1)*spX+Juv[,"X"] #matrix indexes for density matrix
 	psurv<-ddep(alpha, beta, density[temp]) #juvenile survival
-	print(density[temp])
 	if (selection==T) psurv<-psurv*fit.func(Juv[,"P"]) #toad relative fitness
 	Juv<-subset(Juv, rbinom(length(Juv[,1]), 1, psurv)==1) #surviving juveniles
 	# gather survivors, age them and return

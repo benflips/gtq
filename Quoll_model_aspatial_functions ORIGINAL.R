@@ -104,7 +104,7 @@ age<-function(popmatrix, selection=F, alpha, fsurv1, fsurv2, msurv, spX, spY, be
 	temp<-(Juv[,"Y"]-1)*spX+Juv[,"X"] #matrix indexes for density matrix
 	psurv<-ddep(alpha, beta, density[temp]) #juvenile survival
 	
-print(density[temp])
+class(density[temp])
 	if (selection==T) psurv<-psurv*fit.func(Juv[,"P"]) #toad relative fitness
 	Juv<-subset(Juv, rbinom(length(Juv[,1]), 1, psurv)==1) #surviving juveniles
 	# gather survivors, age them and return
