@@ -157,7 +157,7 @@ matrix.sample<-function(mtrx, size=1){
 disperse<-function(popmatrix, n.list, prob.d, spX){
 	if (length(popmatrix[,1])==0) return(popmatrix)
 	disp<-rbinom(length(popmatrix[,1]), 1, prob.d) # calculate a probability of dispersal
-	disp<-which(disp==1 & popmatrix[,"A"]==1) #get indices of surviving dispersing (MALE?) juveniles
+	disp<-which(disp==1 & popmatrix[,"A"]==1)# & popmatrix[,"S"]==1) #get indices of surviving dispersing MALE juveniles
 	sub.list<-n.list[(popmatrix[disp,"Y"]-1)*spX+popmatrix[disp,"X"]] #generate list of neighbour matrices
 	sub.list<-lapply(sub.list, matrix.sample) #samples one row from each neighbour matrix
 	sub.list<-do.call("rbind", sub.list) #places result into a matrix
@@ -168,8 +168,7 @@ disperse<-function(popmatrix, n.list, prob.d, spX){
 
 
 ####RUN MODEL######################################################
-
-mother<-function(n=2000, spX=10, spY=10, alpha=-1, fsurv1=0.2, fsurv2=0.02, msurv=0.04, init.b=0, init.p.var=10, h=0.3, gens=50, K=20, fec=6.7, beta=30, prob.d=0.5, sel.time=20, plot=FALSE){
+mother<-function(n=2000, spX=10, spY=10, alpha=-1, fsurv1=0.2, fsurv2=0.02, msurv=0.04, init.b=0, init.p.var=10, h=0.3, gens=50, K=20, fec=6.7, beta=64, prob.d=0.5, sel.time=20, plot=FALSE){
 	pop<-init.inds(n, spX, spY, init.b, init.p.var, h) # create a population
 	n.list<-neighbours.init(spX, spY) # create a list of neighbours for each cell (individual?)
 	popsize<-n
@@ -181,16 +180,16 @@ mother<-function(n=2000, spX=10, spY=10, alpha=-1, fsurv1=0.2, fsurv2=0.02, msur
 		pop<-age(pop, selection=sel, alpha=alpha, fsurv1=fsurv1, fsurv2=fsurv2, msurv=msurv,spX=spX, spY=spY, beta=beta, K=K) # everyone gets a little older
 		pop<-disperse(pop, n.list, prob.d, spX) # and the Juveniles trudge off
 		if (length(pop[,1])==0) { # did we go extinct?
-			popsize<-c(popsize, 0)
+			pe<-TRUE
 			print(paste("The population went extinct at generation ", g, ":-("))
 			break	
-		}
+		} else {pe<-FALSE }
 		popsize<-c(popsize, length(pop[,1])) # new population size appended to popsize vector
 		if (plot==T) plotter(pop, popsize, spX, spY, sel.time, gens, fid=g)
 	}
 	list(pop, popsize)	
+	return(pe)
 }
-
 
 plotter<-function(popmatrix, popsize, spX, spY, sel.time, gens, fid){
 	fname<-paste("simgen", fid, ".png", sep="")
@@ -208,5 +207,24 @@ plotter<-function(popmatrix, popsize, spX, spY, sel.time, gens, fid){
 
 
 
-mother(h=0.3, init.b=-5, plot=T, gens=50)
+#mother(h=0.3, init.b=-5, plot=T, gens=50)
 	
+###### PVA ###############################################################	
+
+#run n iterations for one simulation
+n <-10 #no. of iterations 	
+e <-vector("logical", n) #output vector (prob of extinction)
+	for (i in 1:n){
+		pe<-mother(h=0.3, init.b=-5, plot=T, gens=50)
+		e[i]<-c(pe)
+	}
+prob.extinct<-length(e[e==TRUE])/length(e)	
+print(prob.extinct)
+
+#now how to adjust init.b, init.p.var and h...?
+#possible???
+itit.b<- c(-1, -0.5, 0, 0.5, 1, 10)
+
+for(i in init.b) {
+mother(h=0.3, init.b=i, plot=T, gens=50)
+}
