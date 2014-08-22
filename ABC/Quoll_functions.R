@@ -48,7 +48,7 @@ sample2<-function(v){
 #function that reproduces individuals
 #density dependance acting on fecundity according to grid cell K (beta)
 # takes population matrix
-repro<-function(popmat, spX, spY, fec, init.p.var, h, alpha, beta){
+repro<-function(popmat, spX, spY, init.p.var, h, alpha, beta){
 	#browser()
 	b.var<-h*init.p.var
 	if (length(popmat[,1])==0) return(popmat)
@@ -94,7 +94,7 @@ mdieoff<-function(popmatrix, msurv){
 }
 
 #ages or kills individuals based on age-specific survival plus fitness
-age<-function(popmatrix, selection=F, alpha, fsurv1, fsurv2, msurv, spX, spY, beta, K){
+age<-function(popmatrix, selection=F, alpha, fsurv1, fsurv2){
 	if (length(popmatrix[,1])==0) return(popmatrix)
 	#Survival of adults
 	Ad<-subset(popmatrix, popmatrix[,"A"]>0) #Grabs all adults
@@ -161,19 +161,17 @@ disperse<-function(popmatrix, n.list, prob.d, spX){
 	popmatrix
 }
 
-
-
-####RUN MODEL######################################################
-mother<-function(n=2000, spX=10, spY=10, alpha=-1, fsurv1=0.2, fsurv2=0.02, msurv=0.04, init.b=0, init.p.var=10, h=0.3, gens=50, K=20, fec=6.7, beta=64, prob.d=0.5, sel.time=20, plot=FALSE){
+# runs the model
+mother<-function(n=2000, spX=10, spY=10, alpha=-1, fsurv1=0.2, fsurv2=0.02, msurv=0.04, init.b=0, init.p.var=10, h=0.3, gens=50, beta=64, prob.d=0.5, sel.time=20, plot=FALSE){
 	pop<-init.inds(n, spX, spY, init.b, init.p.var, h) # create a population
 	n.list<-neighbours.init(spX, spY) # create a list of neighbours for each cell (individual?)
 	popsize<-n
 	sel<-FALSE
 	for (g in 2:gens){
-		pop<-repro(popmat=pop, spX=spX, spY=spY, fec=fec, init.p.var=init.p.var, h=h, alpha=alpha, beta=beta) # females reproduce (density dep)
+		pop<-repro(popmat=pop, spX=spX, spY=spY, init.p.var=init.p.var, h=h, alpha=alpha, beta=beta) # females reproduce (density dep)
 		pop<-mdieoff(pop, msurv) # males die off
 		if (g>sel.time) sel<-TRUE # have toads arrived?
-		pop<-age(pop, selection=sel, alpha=alpha, fsurv1=fsurv1, fsurv2=fsurv2, msurv=msurv,spX=spX, spY=spY, beta=beta, K=K) # everyone gets a little older
+		pop<-age(pop, selection=sel, alpha=alpha, fsurv1=fsurv1, fsurv2=fsurv2) # everyone gets a little older
 		pop<-disperse(pop, n.list, prob.d, spX) # and the Juveniles trudge off
 		if (length(pop[,1])==0) { # did we go extinct?
 			pe<-TRUE
@@ -185,6 +183,55 @@ mother<-function(n=2000, spX=10, spY=10, alpha=-1, fsurv1=0.2, fsurv2=0.02, msur
 	}
 	list(pop, popsize)	
 	return(pe)
+}
+
+# Runs the model wrt Pobassoo and Astell islands
+small.mother<-function(alpha, fsurv1, fsurv2, msurv, beta, init.b=0, init.p.var=10, h=0.3, gens=7, prob.d=0.5, sel=FALSE, plot=FALSE){
+	#Pobassoo
+	# Treat Pobassoo 392 Ha as 5x5 space = 15.68 ha per cell
+	spX.pob<-5
+	pop.pob<-init.inds(19, spX=5, spY=5, init.b, init.p.var, h) #founders
+	pop.pob[1:11,"S"]<-0
+	pop.pob[12:19, "S"]<-1
+	pop.pob[,"X"]<-sample(1:2, nrow(pop.pob), replace=TRUE) #introduce into 2x2 space
+	pop.pob[,"Y"]<-sample(1:2, nrow(pop.pob), replace=TRUE)
+	popsize.pob<-11 #to collect outputs
+	sex.rat.pob<-11/8
+	
+	#Astell
+	# treat Astell as 9x9 space = 15.61 ha per cell
+	spX.as<-9 
+	pop.as<-init.inds(45, spX, spY, init.b, init.p.var, h) #founders
+	pop.as[,"X"]<-2 #start all founders at (2,1)
+	pop.as[1:34,"S"]<-0
+	pop.as[35:45, "S"]<-1
+	pop.as[,"X"]<-sample(1:2, nrow(pop.pob), replace=TRUE) #introduce into 2x2 space
+	pop.as[,"Y"]<-sample(1:2, nrow(pop.pob), replace=TRUE)
+	popsize.as<-45 #to collect outputs
+	sex.rat.as<-34/11
+	
+	n.list.pob<-neighbours.init(spX=spX.pob, spY=spX.pob)
+	n.list.as<-neighbours.init(spX=spX.as, spY=spX.as)
+	for (g in 2:gens){
+		pop.pob<-repro(pop.pob, spX.pob, spY=spX.pob, init.p.var, h)
+		pop.pob<-mdieoff(pop.pob, msurv)
+		popsize.pob<-c(popsize.pob, length(which(pop.pob[,"S"]==0 & pop.pob[,"A"]>0)))
+		sex.rat.pob<-c(sex.rat.pob, length(which(pop.pob[,"S"]==0 & pop.pob[,"A"]>0))/length(which(pop.pob[,"S"]==1 & pop.pob[,"A"]>0)))
+		pop.pob<-age(pop.pob, sel, alpha, fsurv1, fsurv2)
+		pop.as<-repro(pop.as, spX=spX.as, spY=spX.as, init.p.var, h)
+		pop.as<-mdieoff(pop.as, msurv)
+		popsize.as<-c(popsize.as, length(which(pop.as[,"S"]==0 & pop.as[,"A"]>0)))
+		sex.rat.as<-c(sex.rat.as, length(which(pop.as[,"S"]==0 & pop.as[,"A"]>0))/length(which(pop.as[,"S"]==1 & pop.as[,"A"]>0)))
+		pop.as<-age(pop.as, sel, alpha, fsurv1, fsurv2)
+		pop.as<-disperse(pop.as, n.list.as, prob.d, spX.as)
+		if (plot==T) plotter(pop.as, popsize.as, spX=spX.as, spY=spX.as, sel.time=999)
+	}	
+	keep<-4:7
+	popsize.pob<-popsize.pob[keep]
+	sex.rat.pob<-sex.rat.pob[keep]
+	popsize.as<-popsize.as[keep]
+	sex.rat.as<-sex.rat.as[keep]
+	c(popsize.pob, sex.rat.pob, popsize.as, sex.rat.as)
 }
 
 plotter<-function(popmatrix, popsize, spX, spY, sel.time, gens, fid){
@@ -201,26 +248,3 @@ plotter<-function(popmatrix, popsize, spX, spY, sel.time, gens, fid){
 	#dev.off()
 }
 
-
-
-#mother(h=0.3, init.b=-5, plot=T, gens=50)
-	
-###### PVA ###############################################################	
-
-#run n iterations for one simulation
-n <-10 #no. of iterations 	
-e <-vector("logical", n) #output vector (prob of extinction)
-	for (i in 1:n){
-		pe<-mother(h=0.3, init.b=-5, plot=T, gens=50)
-		e[i]<-c(pe)
-	}
-prob.extinct<-length(e[e==TRUE])/length(e)	
-print(prob.extinct)
-
-#now how to adjust init.b, init.p.var and h...?
-#possible???
-itit.b<- c(-1, -0.5, 0, 0.5, 1, 10)
-
-for(i in init.b) {
-mother(h=0.3, init.b=i, plot=T, gens=50)
-}
