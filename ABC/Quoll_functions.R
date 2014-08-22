@@ -190,41 +190,41 @@ small.mother<-function(alpha, fsurv1, fsurv2, msurv, beta, init.b=0, init.p.var=
 	#Pobassoo
 	# Treat Pobassoo 392 Ha as 5x5 space = 15.68 ha per cell
 	spX.pob<-5
-	pop.pob<-init.inds(19, spX=5, spY=5, init.b, init.p.var, h) #founders
+	pop.pob<-init.inds(19, spX=spX.pob, spY=spX.pob, init.b, init.p.var, h) #founders
 	pop.pob[1:11,"S"]<-0
 	pop.pob[12:19, "S"]<-1
-	pop.pob[,"X"]<-sample(1:2, nrow(pop.pob), replace=TRUE) #introduce into 2x2 space
-	pop.pob[,"Y"]<-sample(1:2, nrow(pop.pob), replace=TRUE)
+	#pop.pob[,"X"]<-sample(1:4, nrow(pop.pob), replace=TRUE) #introduce into 4x4 space
+	#pop.pob[,"Y"]<-sample(1:4, nrow(pop.pob), replace=TRUE)
 	popsize.pob<-11 #to collect outputs
 	sex.rat.pob<-11/8
 	
 	#Astell
 	# treat Astell as 9x9 space = 15.61 ha per cell
 	spX.as<-9 
-	pop.as<-init.inds(45, spX, spY, init.b, init.p.var, h) #founders
+	pop.as<-init.inds(45, spX=spX.as, spY=spX.as, init.b, init.p.var, h) #founders
 	pop.as[,"X"]<-2 #start all founders at (2,1)
 	pop.as[1:34,"S"]<-0
 	pop.as[35:45, "S"]<-1
-	pop.as[,"X"]<-sample(1:2, nrow(pop.pob), replace=TRUE) #introduce into 2x2 space
-	pop.as[,"Y"]<-sample(1:2, nrow(pop.pob), replace=TRUE)
+	#pop.as[,"X"]<-sample(1:7, nrow(pop.as), replace=TRUE) #introduce into 7x7 space
+	#pop.as[,"Y"]<-sample(1:7, nrow(pop.as), replace=TRUE)
 	popsize.as<-45 #to collect outputs
 	sex.rat.as<-34/11
 	
 	n.list.pob<-neighbours.init(spX=spX.pob, spY=spX.pob)
 	n.list.as<-neighbours.init(spX=spX.as, spY=spX.as)
 	for (g in 2:gens){
-		pop.pob<-repro(pop.pob, spX.pob, spY=spX.pob, init.p.var, h)
+		pop.pob<-repro(pop.pob, spX.pob, spY=spX.pob, init.p.var, h, alpha=alpha, beta=beta)
 		pop.pob<-mdieoff(pop.pob, msurv)
 		popsize.pob<-c(popsize.pob, length(which(pop.pob[,"S"]==0 & pop.pob[,"A"]>0)))
 		sex.rat.pob<-c(sex.rat.pob, length(which(pop.pob[,"S"]==0 & pop.pob[,"A"]>0))/length(which(pop.pob[,"S"]==1 & pop.pob[,"A"]>0)))
 		pop.pob<-age(pop.pob, sel, alpha, fsurv1, fsurv2)
-		pop.as<-repro(pop.as, spX=spX.as, spY=spX.as, init.p.var, h)
+		pop.as<-repro(pop.as, spX=spX.as, spY=spX.as, init.p.var, h, alpha=alpha, beta=beta)
 		pop.as<-mdieoff(pop.as, msurv)
 		popsize.as<-c(popsize.as, length(which(pop.as[,"S"]==0 & pop.as[,"A"]>0)))
 		sex.rat.as<-c(sex.rat.as, length(which(pop.as[,"S"]==0 & pop.as[,"A"]>0))/length(which(pop.as[,"S"]==1 & pop.as[,"A"]>0)))
 		pop.as<-age(pop.as, sel, alpha, fsurv1, fsurv2)
 		pop.as<-disperse(pop.as, n.list.as, prob.d, spX.as)
-		if (plot==T) plotter(pop.as, popsize.as, spX=spX.as, spY=spX.as, sel.time=999)
+		if (plot==T) plotter(pop.as, popsize.as, spX=spX.as, spY=spX.as, sel.time=999, gens, 22)
 	}	
 	keep<-4:7
 	popsize.pob<-popsize.pob[keep]
