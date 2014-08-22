@@ -1,0 +1,6 @@
+model{
+	for (ii in 1:nrw){
+		s[ii]~dbinom(p, n[ii])
+	}
+	p~dbeta(1, 1)
+}

@@ -71,7 +71,7 @@ repro<-function(popmat, spX, spY, fec, init.p.var, h, alpha, beta){
 	f<-table(factor(female[,"X"], levels=1:spX), factor(female[,"Y"], levels=1:spY))
 #density dependant offspring number for each grid cell
 	dd.off<- ddep1(x=f, beta, alpha)
-	off.no<-rbinom(length(f), 8, dd.off)
+	off.no<-rbinom(length(f), 10, dd.off) # max offspring = 10
 #replicate offspring number by number of females in each grid cell	
 	no.females<-as.vector(f, mode="integer")
 	off.nos<- rep(off.no, no.females)
