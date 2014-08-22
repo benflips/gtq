@@ -61,9 +61,10 @@ repro<-function(popmat, spX, spY, init.p.var, h, alpha, beta){
 	dens<-table(factor(female[,"X"], levels=1:spX), factor(female[,"Y"], levels=1:spY)) #work out the density of females in each grid cell	
 	temp<-(female[,"Y"]-1)*spX+female[,"X"] #matrix indexes for male matrix and blist
 	female<-subset(female, male[temp]>0) # matrix of females with available males
+	if (nrow(female)==0) return(NULL)
 	temp<-temp[which(male[temp]>0)] #update temp
 	B.off<-unlist(lapply(b.list[temp], sample2)) #sample a male for each female (replace=T)
-	if (length(B.off)!=length(female[,"B"])) print("error")#browser() #error catcher!
+	if (length(B.off)==0) return(NULL)
 	B.off<-(B.off+female[,"B"])/2 #calculate midparent value	
 #matrix of females ordered by grid number
 	female<- cbind(B.off, female) # bind offspring B values to their mums
@@ -72,14 +73,14 @@ repro<-function(popmat, spX, spY, init.p.var, h, alpha, beta){
 	off.no<-rbinom(nrow(female), 10, dd.off) # max offspring = 10
 
 #get info for next generation and combine
-	offspring<-female[rep(1:nrow(female), off.no),]
-
+	offspring<-matrix(female[rep(1:nrow(female), off.no),], ncol=7, dimnames=list(NULL, colnames(female)))
+	if (is.null(nrow(offspring)) | is.na(nrow(offspring))) return(popmat)
 	offspring[,"B"]<-offspring[,"B.off"]
 	offspring[,"B"]<-rnorm(nrow(offspring), offspring[,"B"], (b.var/2)^0.5) #mid parent breeding values with variance of surviving offspring
-	offspring<-offspring[,-1]
 	offspring[,"S"]<-rbinom(nrow(offspring), 1, 0.5) # random sex allocation
 	offspring[,"A"]<-rep(0, nrow(offspring))	# age=0
 	offspring[,"P"]<-rnorm(nrow(offspring), offspring[,"B"], (init.p.var-b.var)^0.5) #offspring phenotypes
+	offspring<-offspring[,-1]
 	popmat<-rbind(popmat, offspring)
 	popmat
 }
@@ -186,7 +187,7 @@ mother<-function(n=2000, spX=10, spY=10, alpha=-1, fsurv1=0.2, fsurv2=0.02, msur
 }
 
 # Runs the model wrt Pobassoo and Astell islands
-small.mother<-function(alpha, fsurv1, fsurv2, msurv, beta, init.b=0, init.p.var=10, h=0.3, gens=7, prob.d=0.5, sel=FALSE, plot=FALSE){
+small.mother<-function(alpha, fsurv1, fsurv2, msurv, beta, init.b=0, init.p.var=10, h=0.3, gens=7, prob.d, sel=FALSE, plot=FALSE){
 	#Pobassoo
 	# Treat Pobassoo 392 Ha as 5x5 space = 15.68 ha per cell
 	spX.pob<-5
