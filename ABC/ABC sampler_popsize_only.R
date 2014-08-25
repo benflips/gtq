@@ -9,7 +9,7 @@ stdz<-function(vec){
 }
 								
 gold<-c() # place to put the best models
-for (i in 1:100){
+for (i in 1:200){
 	fname=paste("ABCSample", i, ".RData", sep="")
 	load(fname)
 	out<-out[,!grepl("sr", colnames(out))]

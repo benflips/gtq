@@ -22,7 +22,11 @@ for (s in 1:sr){
 	fsurv1.s<-rbeta(1, output[2,1], output[2,2]) #other priors
 	fsurv2.s<-rbeta(1, output[3,1], output[3,2]) 
 	msurv.s<-rbeta(1, output[1,1], output[1,2]) 
-	beta.s<-runif(1, 5,40)
+<<<<<<< HEAD
+	beta.s<-runif(1, 15,60)
+=======
+	beta.s<-runif(1, 20,100)
+>>>>>>> FETCH_HEAD
 	temp<-small.mother(alpha=alpha.s, fsurv1=fsurv1.s, fsurv2=fsurv2.s, msurv=msurv.s, beta=beta.s, plot=F, prob.d=prob.d.s)
 	temp<-c(alpha.s, fsurv1.s, fsurv2.s, msurv.s, beta.s, prob.d.s, temp)
 	out<-rbind(out, temp)
