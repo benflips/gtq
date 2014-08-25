@@ -16,5 +16,5 @@ for (ii in 1:length(tt)) {
 	close(zz)
 			
 	#submit the job
-	system(paste('qsub -l nodes=1:ppn=1 -l pmem=500mb -l walltime=03:00:00 jobrun_',tt[ii],'.sh',sep=''))
+	system(paste('qsub -l nodes=1:ppn=1 -l pmem=500mb -l walltime=03:30:00 jobrun_',tt[ii],'.sh',sep=''))
 }

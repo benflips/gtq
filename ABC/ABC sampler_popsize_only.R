@@ -7,11 +7,12 @@ lobs<-log(obs)
 stdz<-function(vec){
 	(vec-mean(vec))/sd(vec)	
 }
+
+fnames<-list.files()
 								
 gold<-c() # place to put the best models
-for (i in 1:200){
-	fname=paste("ABCSample", i, ".RData", sep="")
-	load(fname)
+for (i in fnames){
+	load(i)
 	out<-out[,!grepl("sr", colnames(out))]
 	
 	test<-apply(out[,7:14]==0, 1, sum)==0
