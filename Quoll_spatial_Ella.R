@@ -219,7 +219,8 @@ print(prob.extinct)
 
 #now how to adjust init.b, init.p.var and h...?
 #possible???
-itit.b<- c(-1, -0.5, 0, 0.5, 1, 10)
+init.b<- vector("numeric", 6)
+itit.b<- c(-10, -1, -0.5, 0, 0.5, 1, 10)
 
 for(i in init.b) {
 mother(h=0.3, init.b=i, plot=T, gens=50)
