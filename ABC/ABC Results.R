@@ -1,4 +1,4 @@
-d.dir<-"~/gtq/"
+d.dir<-"~/GitHub/gtq/"
 
 
 load(paste(d.dir, "ABC/Kept_sims_poponlyhalfpcED.RData", sep=""))
@@ -9,6 +9,12 @@ load(paste(d.dir, "Priors/SurvivalPriors.rdata", sep=""))
 ddep1<- function(x, beta, alpha) {
 	1/(1+exp(-alpha*(x-beta)))
 }
+
+obs<-cbind(Year=c(2003, 2006:2009), Pob=c(19, 766, 818, 470, 300), Ast=c(45, 3228, 4820, 2590, 2890))
+pred<-apply(gold[,7:14], 2, mean)
+pred.sd<-apply(gold[,7:14], 2, sd)
+pred.x<-rep(2006:2009, times=2)
+
 
 pdf(paste(d.dir, "ABC/Posteriors.pdf", sep=""))
 	#Alpha
@@ -24,13 +30,13 @@ pdf(paste(d.dir, "ABC/Posteriors.pdf", sep=""))
 		
 	#Beta
 	plot(density(gold[,"beta"]), 
-		xlim=c(15, 60), 
+		xlim=c(20, 180), 
 		type="l", 
 		main="Beta",
 		xlab="Beta",
 		bty="l")
-	X<-seq(15, 60, 0.1)
-	lines(X, dunif(X, 15, 60),
+	X<-seq(20, 180, 0.1)
+	lines(X, dunif(X, 20, 180),
 		col="grey70")
 	
 	#Prob.d
@@ -45,8 +51,8 @@ pdf(paste(d.dir, "ABC/Posteriors.pdf", sep=""))
 		col="grey70")
 	
 	#Fsurv1
-	yl<-range(c(dbeta(X, output[2,1], output[2,2])),
-		gold[,"fsurv1"])
+	yl<-range(c(dbeta(X, output[2,1], output[2,2]),
+		density(gold[,"fsurv1"])$y))
 	plot(density(gold[,"fsurv1"]),
 		xlim=c(0,1),
 		ylim=yl,
@@ -58,8 +64,8 @@ pdf(paste(d.dir, "ABC/Posteriors.pdf", sep=""))
 		col="grey70")
 		
 	#Fsurv2
-	yl<-range(c(dbeta(X, output[3,1], output[3,2])),
-		gold[,"fsurv2"])
+	yl<-range(c(dbeta(X, output[3,1], output[3,2]),
+		density(gold[,"fsurv2"])$y))
 	plot(density(gold[,"fsurv2"]),
 		xlim=c(0,1),
 		ylim=yl,
@@ -83,8 +89,31 @@ pdf(paste(d.dir, "ABC/Posteriors.pdf", sep=""))
 	lines(X, dbeta(X, output[1,1], output[1,2]),
 		col="grey70")
 		
-	X<-seq(0, 100, 0.2)
+	X<-seq(0, 180, 0.2)
 	Y<-ddep1(X, mean(gold[,"beta"]), mean(gold[,"alpha"]))
-	plot(Y~X, type="l")	
-	
+	plot(Y~X, type="l",
+		xlab="Local density",
+		ylab=expression(italic(p)),
+		bty="l",
+		main="Density dependence curve")
+		
+	yl<-c(0, max(pred+2*pred.sd))	
+	matplot(x=obs[,1], y=obs[,2:3],
+		pch=1:2,
+		col=1,
+		ylim=yl,
+		bty="l",
+		xlab="Year",
+		ylab="Population size")
+	points(pred.x, pred, 
+		pch=rep(1:2, each=4),
+		col="grey70")
+	arrows(pred.x, pred-2*pred.sd, y1=pred+2*pred.sd,
+		length=0,
+		col="grey70")
+	legend("topleft", 
+		legend=c("Pobasoo", "Astell", "Observed", "Simulated"), 
+		pch=c(1:2, NA, NA),
+		fill=c(NA, NA, "black", "Grey70"),
+		border=NA)
 dev.off()
