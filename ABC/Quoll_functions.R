@@ -8,14 +8,15 @@
 # individuals have a location (spX, spY) and are generated from
 # initial mean breeding value, initial variance in breeding value, and heritability
 init.inds<-function(n, spX, spY, init.b, init.p.var, h){
-	X<-runif(n, 1, spX+1)%/%1 #grid ref
-	Y<-runif(n, 1, spY+1)%/%1
+	random<-data.frame(Y=test3[,1], X=test3[,2], dens=sample(test3[,3]))
+	Y<-rep(random[,1],times=random[,"dens"])
+	X<-rep(random[,2],times=random[,"dens"])
 	S<-rbinom(n, 1, 0.5) #sex
 	A<-rep(1, n) #age
 	b.var<-h*init.p.var
 	B<-rnorm(n, init.b, b.var^0.5) # breeding values
 	P<-rnorm(n, B, (init.p.var-b.var)^0.5)
-	cbind(X, Y, S, A, B, P)		
+	cbind(X, Y, S, A, B, P)	
 }
 
 # Function that defines relationship between Phenotype and Fitness (survival)
@@ -165,7 +166,7 @@ disperse<-function(popmatrix, n.list, prob.d, spX){
 # runs the model
 
 # dem.pars is a vector with alpha, fs1, fs2, msurv, beta, prob.d
-mother<-function(n=2000, spX=10, spY=10, dem.pars, init.b=0, init.p.var=10, h=0.3, gens=50, sel.time=20, plot=FALSE){
+mother<-function(n=init.pop, spX=10, spY=10, dem.pars, init.b=0, init.p.var=10, h=0.3, gens=50, sel.time=20, plot=FALSE){
 	alpha<-dem.pars[1]
 	fsurv1<-dem.pars[2]
 	fsurv2<-dem.pars[3]
@@ -193,7 +194,7 @@ mother<-function(n=2000, spX=10, spY=10, dem.pars, init.b=0, init.p.var=10, h=0.
 	}
 
 	list(pop, popsize)	
-	#return(pe)
+	#return(pop)
 }
 
 # Runs the model wrt Pobassoo and Astell islands
@@ -259,4 +260,4 @@ plotter<-function(popmatrix, popsize, spX, spY, sel.time, gens, fid){
 	#dev.off()
 }
 
-mother(h=0.3, init.b=-5, plot=T, gens=100)
+#mother(h=0.3, init.b=-5, plot=T, gens=100)
