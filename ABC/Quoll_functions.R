@@ -166,7 +166,7 @@ disperse<-function(popmatrix, n.list, prob.d, spX){
 # runs the model
 
 # dem.pars is a vector with alpha, fs1, fs2, msurv, beta, prob.d
-mother<-function(n=init.pop, spX=10, spY=10, dem.pars, init.b=0, init.p.var=10, h=0.3, gens=50, sel.time=20, plot=FALSE){
+mother<-function(n=init.pop, spX=10, spY=10, dem.pars, init.b=-5, init.p.var=10, h=0.3, gens=50, sel.time=20, plot=FALSE){
 	alpha<-dem.pars[1]
 	fsurv1<-dem.pars[2]
 	fsurv2<-dem.pars[3]
@@ -193,8 +193,8 @@ mother<-function(n=init.pop, spX=10, spY=10, dem.pars, init.b=0, init.p.var=10, 
 		if (plot==T) plotter(pop, popsize, spX, spY, sel.time, gens, fid=g)
 	}
 
-	list(pop, popsize)	
-	#return(pop)
+	#list(pop, popsize)	
+	return(pe)
 }
 
 # Runs the model wrt Pobassoo and Astell islands

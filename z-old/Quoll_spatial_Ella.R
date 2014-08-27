@@ -225,3 +225,67 @@ itit.b<- c(-10, -1, -0.5, 0, 0.5, 1, 10)
 for(i in init.b) {
 mother(h=0.3, init.b=i, plot=T, gens=50)
 }
+
+
+###### playing with loops reject code########
+
+
+
+
+
+#### playing with loops ###########
+
+
+#run n iterations for one simulation (with single b value)
+n <-2 #no. of iterations 	
+e <-matrix("numeric", n) #prob of extinction vector
+	for (i in 1:n){
+		pe<-mother(dem.pars=pars, init.b=-10, gens=5, sel.time=2, h=0.3)
+		e[i]<-c(pe)
+	}
+prob.extinct<-length(e[e==TRUE])/n
+prob.extinct
+
+
+
+
+#now how to adjust init.b, init.p.var and h...?
+
+#init.b<- vector("numeric", 6)
+#itit.b<- c(-10, -1, -0.5, 0, 0.5, 1, 10)
+
+
+#output <-vector("numeric", 6) #output vector (prob of extinction & init.b)
+#b<- c(-10, -5, 0, 5, 10)
+a<- vector()
+n <-2 #no. of iterations 	
+e <-matrix("numeric", n) #prob of extinction vector
+for(j in c(-10, -5, 0, 5, 10)) {
+		for (i in 1:n){
+			pe<-mother(dem.pars=pars, init.b=j, gens=5, sel.time=2, h=0.3)	
+			e[i]<-c(pe)
+		}
+	prob.e<- length(e[e==TRUE])/n
+	print(paste(prob.e,j,sep=","))
+	a<- c(a, prob.e)
+}
+result<- cbind(a, c(-10, -5, 0, 5, 10))
+
+
+e <-vector("logical", length=7) #prob of extinction vector
+#init.b<- vector("numeric", 6)
+#init.b<- c(-10, -1, -0.5, 0, 0.5, 1, 10)
+for(j in c(-10, -5, 0, 5, 10)) {
+		pe<-mother(dem.pars=pars, init.b=j, gens=5, sel.time=2, h=0.3, plot=T)
+		e[j]<-c(pe)
+		}
+	prob.extinct<-length(e[e==TRUE])/6
+	prob.extinct
+
+
+init.b<- vector("numeric", 6)
+init.b<- c(-10, -1, -0.5, 0, 0.5, 1, 10)
+
+for(i in init.b) {
+mother(h=0.3, init.b=i, plot=T, gens=50)
+}
