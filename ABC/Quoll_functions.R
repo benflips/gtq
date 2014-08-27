@@ -163,9 +163,7 @@ disperse<-function(popmatrix, n.list, prob.d, spX){
 }
 
 # runs the model
-<<<<<<< HEAD
-mother<-function(n=2000, spX=10, spY=10, alpha=-1, fsurv1=0.12, fsurv2=0.02, msurv=0.04, init.b=0, init.p.var=10, h=0.3, gens=50, beta=114.07, prob.d=0.5, sel.time=100, plot=FALSE){
-=======
+
 # dem.pars is a vector with alpha, fs1, fs2, msurv, beta, prob.d
 mother<-function(n=2000, spX=10, spY=10, dem.pars, init.b=0, init.p.var=10, h=0.3, gens=50, sel.time=20, plot=FALSE){
 	alpha<-dem.pars[1]
@@ -174,7 +172,7 @@ mother<-function(n=2000, spX=10, spY=10, dem.pars, init.b=0, init.p.var=10, h=0.
 	msurv<-dem.pars[4]
 	beta<-dem.pars[5]
 	prob.d<-dem.pars[6]
->>>>>>> FETCH_HEAD
+
 	pop<-init.inds(n, spX, spY, init.b, init.p.var, h) # create a population
 	n.list<-neighbours.init(spX, spY) # create a list of neighbours for each cell (individual?)
 	popsize<-n
@@ -193,15 +191,9 @@ mother<-function(n=2000, spX=10, spY=10, dem.pars, init.b=0, init.p.var=10, h=0.
 		popsize<-c(popsize, length(pop[,1])) # new population size appended to popsize vector
 		if (plot==T) plotter(pop, popsize, spX, spY, sel.time, gens, fid=g)
 	}
-<<<<<<< HEAD
-	list(pop, popsize)
-	#dens<-table(factor(pop[,"X"], levels=1:spX), factor(pop[,"Y"], levels=1:spY))
-	#print(dens)
-	return(pe)
-=======
+
 	list(pop, popsize)	
 	#return(pe)
->>>>>>> FETCH_HEAD
 }
 
 # Runs the model wrt Pobassoo and Astell islands
