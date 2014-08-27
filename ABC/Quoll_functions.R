@@ -163,7 +163,7 @@ disperse<-function(popmatrix, n.list, prob.d, spX){
 }
 
 # runs the model
-mother<-function(n=2000, spX=10, spY=10, alpha=-1, fsurv1=0.2, fsurv2=0.02, msurv=0.04, init.b=0, init.p.var=10, h=0.3, gens=50, beta=64, prob.d=0.5, sel.time=20, plot=FALSE){
+mother<-function(n=2000, spX=10, spY=10, alpha=-1, fsurv1=0.12, fsurv2=0.02, msurv=0.04, init.b=0, init.p.var=10, h=0.3, gens=50, beta=114.07, prob.d=0.5, sel.time=100, plot=FALSE){
 	pop<-init.inds(n, spX, spY, init.b, init.p.var, h) # create a population
 	n.list<-neighbours.init(spX, spY) # create a list of neighbours for each cell (individual?)
 	popsize<-n
@@ -182,7 +182,9 @@ mother<-function(n=2000, spX=10, spY=10, alpha=-1, fsurv1=0.2, fsurv2=0.02, msur
 		popsize<-c(popsize, length(pop[,1])) # new population size appended to popsize vector
 		if (plot==T) plotter(pop, popsize, spX, spY, sel.time, gens, fid=g)
 	}
-	list(pop, popsize)	
+	list(pop, popsize)
+	#dens<-table(factor(pop[,"X"], levels=1:spX), factor(pop[,"Y"], levels=1:spY))
+	#print(dens)
 	return(pe)
 }
 
@@ -249,3 +251,4 @@ plotter<-function(popmatrix, popsize, spX, spY, sel.time, gens, fid){
 	#dev.off()
 }
 
+mother(h=0.3, init.b=-5, plot=T, gens=100)
