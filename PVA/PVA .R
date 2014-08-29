@@ -20,9 +20,9 @@ init.pop<-sum(test3[,3])
 
 #input
 n <-100 #no. of iterations 	
-b<- c(-10, -5, 0, 5, 10) #values of b
+b<- c(-9.5, -9, -8.5, -8) #values of b
 #output
-e <-matrix("numeric", n) # i loop output 
+e <-vector() # i loop output 
 pr<- vector() # j loop output
 
 for(j in b) {
@@ -35,4 +35,4 @@ for(j in b) {
 }
 output<- cbind(pr, b)
 output
-
+write(output, "pva results")
