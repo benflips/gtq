@@ -1,6 +1,35 @@
 ### Functions and model for doing PVA of quolls under evolution ###
 
 ###Note: execution of quantitative genetics is (badly) incorrect and needs to be fixed before evolutionary scenarios can be implemented
+##fitted values FOR MY LAPTOP
+s.dir<-"/Users/ellakelly/GitHub/gtq/ABC/" #source directory
+
+source(paste(s.dir, "Quoll_functions.R", sep=""))
+
+#### FOR BEN's COMP 
+
+#s.dir<-"/Users/ellakelly/Documents/GitHub/gtq/ABC/" #source directory
+
+#source(paste(s.dir, "Quoll_functions.R", sep=""))
+
+
+###################################################################################
+## Model Runs ##
+
+# fitted values
+load(paste(s.dir, "Kept_sims_poponlyhalfpcED.RData", sep=""))
+pars<-apply(gold[,1:6], 2, mean)
+
+
+
+#equilibrium population density 
+s.dir<-"/Users/ellakelly/GitHub/gtq/Priors/" #source directory
+load(paste(s.dir, "init.density", sep=""))
+init.pop<-sum(test3[,3])
+
+### Functions and model for doing PVA of quolls under evolution ###
+
+###Note: execution of quantitative genetics is (badly) incorrect and needs to be fixed before evolutionary scenarios can be implemented
 
 #### Ella edited 12/8/14
 
@@ -16,7 +45,21 @@ init.inds<-function(n, spX, spY, init.b, init.p.var, h){
 	b.var<-h*init.p.var
 	B<-rnorm(n, init.b, b.var^0.5) # breeding values
 	P<-rnorm(n, B, (init.p.var-b.var)^0.5)
-	cbind(X, Y, S, A, B, P)	
+	HI<-rep(0, n) #hybrid index, all start at 0
+	cbind(X, Y, S, A, B, P, HI)	
+}
+
+###translocated population ALL PUT IN 5x5 ON GRID
+trans.inds<-function(n, spX, spY, init.b, init.p.var, h){
+	Y<-rep(5, n) 
+	X<-rep(5, n) 
+	S<-rbinom(n, 1, 0.5) #sex
+	A<-rep(1, n) #age
+	b.var<-h*init.p.var
+	B<-rnorm(n, init.b, b.var^0.5) # breeding values
+	P<-rnorm(n, B, (init.p.var-b.var)^0.5)
+	HI<-rep(1, n) #hybrid index, all start at 0
+	cbind(X, Y, S, A, B, P, HI)	
 }
 
 # Function that defines relationship between Phenotype and Fitness (survival)
@@ -25,25 +68,37 @@ fit.func<-function(P){
 	P>0
 }
 
-#function that creates a list of vectors of male breeding values for each grid cell
-b.list.maker<-function(popmat, spX, spY){
-	male<-subset(popmat, popmat[,"S"]==1 & popmat[,"A"]>0)
-	out<-vector("list", spX*spY)
-	for (i in 1:length(male[,1])){
-		out[[(male[i,"Y"]-1)*spX+male[i,"X"]]]<-c(out[[(male[i,"Y"]-1)*spX+male[i,"X"]]], male[i,"B"])
-	}	
-	out
-}
-
 #generalised density dependent decay (where alpha < 0)
 ddep1<- function(x, beta, alpha) {
 	1/(1+exp(-alpha*(x-beta)))
 }
 
-#function to sample across a list
-sample2<-function(v){
-	if (is.null(v)==T) return(NULL)
-	else sample(v, 1, T)	
+#sampling males
+randomRows = function(df,n){
+   return(df[sample(nrow(df),n,replace=TRUE),])
+}
+
+sample3<-function(list, density, spX, spY){
+	out<-vector("list", length=length(density))
+	for (i in 1:length(list)){
+	out[[i]]<-
+	if (is.null(density[i,])==T) return(NULL)
+	else randomRows(list[[i]], density[i,])
+	}
+	out
+}
+	
+#create matrix with midparent value and hybrid index	
+mating<-function(m,f,x){
+	out<-matrix("numeric", ncol=2, nrow=length(x))
+	mB<- unlist(sapply(m, `[[`, 1))
+	fB<- unlist(sapply(f, `[[`, 1))
+	mHI<- unlist(sapply(m, `[[`, 2))
+	fHI<- unlist(sapply(f, `[[`, 2))
+	B.off<-rowMeans((cbind(mB,fB)), na.rm = FALSE, dims = 1)
+	HI.off<-rowMeans((cbind(mHI,fHI)), na.rm = FALSE, dims = 1)
+	out<-cbind(B.off, HI.off)
+	out
 }
 
 #function that reproduces individuals
@@ -53,36 +108,45 @@ repro<-function(popmat, spX, spY, init.p.var, h, alpha, beta){
 	#browser()
 	b.var<-h*init.p.var
 	if (length(popmat[,1])==0) return(popmat)
-	# collect breeding females and their mates' B values
-	male<-subset(popmat, popmat[,"S"]==1 & popmat[,"A"]>0)
+	# collect breeding females and their mates' B and HI values
+	#males
+	male<-subset(popmat, popmat[,"S"]==1 & popmat[,"A"]>0) 
 	if (length(male)==0) return(popmat)
-	male<-table(factor(male[,"X"], levels=1:spX), factor(male[,"Y"], levels=1:spY)) #number of males present in each cell
-	b.list<-b.list.maker(popmat, spX, spY) #list male Bs by space
+	mdens<-table(factor(male[,"X"], levels=1:spX), factor(male[,"Y"], levels=1:spY)) #number of males present in each cell
+	#females
 	female<-subset(popmat, popmat[,"S"]==0 & popmat[,"A"]>0) #matrix of all adult females
 	dens<-table(factor(female[,"X"], levels=1:spX), factor(female[,"Y"], levels=1:spY)) #work out the density of females in each grid cell	
 	temp<-(female[,"Y"]-1)*spX+female[,"X"] #matrix indexes for male matrix and blist
-	female<-subset(female, male[temp]>0) # matrix of females with available males
+	female<-subset(female, mdens[temp]>0) # matrix of females with available males
 	if (nrow(female)==0) return(NULL)
-	temp<-temp[which(male[temp]>0)] #update temp
-	B.off<-unlist(lapply(b.list[temp], sample2)) #sample a male for each female (replace=T)
-	if (length(B.off)==0) return(NULL)
-	B.off<-(B.off+female[,"B"])/2 #calculate midparent value	
-print(B.off)
-#matrix of females ordered by grid number
-	female<- cbind(B.off, female) # bind offspring B values to their mums
-	fdens<-dens[(female[,"Y"]-1)*spX+female[,"X"]] # Density each mum experiences
+	#HIs & Bs
+	new.dens<-table(factor(female[,"X"], levels=1:spX), factor(female[,"Y"], levels=1:spY)) #work out the density of females in each grid cell	
+	fdens<- as.matrix(as.numeric(new.dens))
+	B<-male[,"B"]
+	HI<-male[,"HI"]
+	XY<-(male[,"Y"]-1)*spX+male[,"X"]
+	df<-data.frame(B,HI,XY)
+	M.list <- split(df , f = df$XY)	#list males HI and Bd by space
+	male.list<-sample3(M.list, fdens, spX, spY) #sample depending on available females
+	fXY<-(female[,"X"]-1)*spX+female[,"Y"]
+	df<-data.frame(female[,"B"],female[,"HI"],fXY)
+	female.list <- split(df , f= df$fXY) #list female B and HI values by space 
+	#mating (mean of B and HI values) 
+	mated<-mating(male.list, female.list, female)
+	female<- cbind(mated, female) # bind offspring B values to their mums
+#density dependance
 	dd.off<- ddep1(x=fdens, beta, alpha)
 	off.no<-rbinom(nrow(female), 10, dd.off) # max offspring = 10
-
 #get info for next generation and combine
-	offspring<-matrix(female[rep(1:nrow(female), off.no),], ncol=7, dimnames=list(NULL, colnames(female)))
+	offspring<-matrix(female[rep(1:nrow(female), off.no),], ncol=9, dimnames=list(NULL, colnames(female)))
 	if (is.null(nrow(offspring)) | is.na(nrow(offspring))) return(popmat)
 	offspring[,"B"]<-offspring[,"B.off"]
 	offspring[,"B"]<-rnorm(nrow(offspring), offspring[,"B"], (b.var/2)^0.5) #mid parent breeding values with variance of surviving offspring
 	offspring[,"S"]<-rbinom(nrow(offspring), 1, 0.5) # random sex allocation
 	offspring[,"A"]<-rep(0, nrow(offspring))	# age=0
 	offspring[,"P"]<-rnorm(nrow(offspring), offspring[,"B"], (init.p.var-b.var)^0.5) #offspring phenotypes
-	offspring<-offspring[,-1]
+	offspring[,"HI"]<-offspring[,"HI.off"]
+	offspring<-offspring[,-c(1,2)]
 	popmat<-rbind(popmat, offspring)
 	popmat
 }
@@ -94,6 +158,12 @@ mdieoff<-function(popmatrix, msurv){
 	psurv[which(popmatrix[,"S"]==1 & popmatrix[,"A"]>1)]<-0 #two year old males
 	popmatrix<-subset(popmatrix, rbinom(length(popmatrix[,1]), 1, psurv)==1) # probabilistic survival
 	popmatrix
+}
+
+#Hybrid index fitness
+HI_fitness<-function(HI, s, beta){
+  W<-1-s*(4*HI*(1-HI))^beta
+  W
 }
 
 #ages or kills individuals based on age-specific survival plus fitness
@@ -108,6 +178,12 @@ age<-function(popmatrix, selection=F, alpha, fsurv1, fsurv2){
 	if (selection==T) psurv<-psurv*fit.func(Ad[,"P"]) #toad relative fitness
 	Ad<-subset(Ad, rbinom(length(Ad[,1]), 1, psurv)==1) # probabilistic survival
 	#Survival of juvs only if toads are present (otherwise survival=1)
+#Juvenile survival
+	#hybrid index
+	Juv<-subset(popmatrix, popmatrix[,"A"]==0)
+	psurv<- HI_fitness(Juv[,"HI"], 1, 10)
+	Juv<-subset(Juv, rbinom(length(Juv[,1]), 1, psurv)==1) #surviving juveniles
+	#if toads are present	
 	Juv<-subset(popmatrix, popmatrix[,"A"]==0)
 	psurv<-1
 	if (selection==T) psurv<-psurv*fit.func(Juv[,"P"]) #toad relative fitness
@@ -167,7 +243,7 @@ disperse<-function(popmatrix, n.list, prob.d, spX){
 # runs the model
 
 # dem.pars is a vector with alpha, fs1, fs2, msurv, beta, prob.d
-mother<-function(n=init.pop, spX=10, spY=10, dem.pars, init.b=-5, init.p.var=10, h=0.3, gens=50, sel.time=20, plot=FALSE){
+mother<-function(n=init.pop, spX=10, spY=10, dem.pars, init.b=-5, init.p.var=10, h=0.3, gens=50, sel.time=20, plot=FALSE, hybrid=0){
 	alpha<-dem.pars[1]
 	fsurv1<-dem.pars[2]
 	fsurv2<-dem.pars[3]
@@ -179,7 +255,9 @@ mother<-function(n=init.pop, spX=10, spY=10, dem.pars, init.b=-5, init.p.var=10,
 	n.list<-neighbours.init(spX, spY) # create a list of neighbours for each cell (individual?)
 	popsize<-n
 	sel<-FALSE
+	trans.pop<- trans.inds(n=1000, spX, spY, init.b, init.p.var, h)
 	for (g in 2:gens){
+		if (g<=(sel.time-2)) pop<-rbind(pop, trans.pop)
 		pop<-repro(popmat=pop, spX=spX, spY=spY, init.p.var=init.p.var, h=h, alpha=alpha, beta=beta) # females reproduce (density dep)
 		pop<-mdieoff(pop, msurv) # males die off
 		if (g>sel.time) sel<-TRUE # have toads arrived?
@@ -195,56 +273,7 @@ mother<-function(n=init.pop, spX=10, spY=10, dem.pars, init.b=-5, init.p.var=10,
 	}
 
 	#list(pop, popsize)	
-	return(pe)
-}
-
-# Runs the model wrt Pobassoo and Astell islands
-small.mother<-function(alpha, fsurv1, fsurv2, msurv, beta, init.b=0, init.p.var=10, h=0.3, gens=7, prob.d, sel=FALSE, plot=FALSE){
-	#Pobassoo
-	# Treat Pobassoo 392 Ha as 5x5 space = 15.68 ha per cell
-	spX.pob<-5
-	pop.pob<-init.inds(19, spX=spX.pob, spY=spX.pob, init.b, init.p.var, h) #founders
-	pop.pob[1:11,"S"]<-0
-	pop.pob[12:19, "S"]<-1
-	#pop.pob[,"X"]<-sample(1:4, nrow(pop.pob), replace=TRUE) #introduce into 4x4 space
-	#pop.pob[,"Y"]<-sample(1:4, nrow(pop.pob), replace=TRUE)
-	popsize.pob<-11 #to collect outputs
-	sex.rat.pob<-11/8
-	
-	#Astell
-	# treat Astell as 9x9 space = 15.61 ha per cell
-	spX.as<-9 
-	pop.as<-init.inds(45, spX=spX.as, spY=spX.as, init.b, init.p.var, h) #founders
-	pop.as[,"X"]<-2 #start all founders at (2,1)
-	pop.as[1:34,"S"]<-0
-	pop.as[35:45, "S"]<-1
-	#pop.as[,"X"]<-sample(1:7, nrow(pop.as), replace=TRUE) #introduce into 7x7 space
-	#pop.as[,"Y"]<-sample(1:7, nrow(pop.as), replace=TRUE)
-	popsize.as<-45 #to collect outputs
-	sex.rat.as<-34/11
-	
-	n.list.pob<-neighbours.init(spX=spX.pob, spY=spX.pob)
-	n.list.as<-neighbours.init(spX=spX.as, spY=spX.as)
-	for (g in 2:gens){
-		pop.pob<-repro(pop.pob, spX.pob, spY=spX.pob, init.p.var, h, alpha=alpha, beta=beta)
-		pop.pob<-mdieoff(pop.pob, msurv)
-		popsize.pob<-c(popsize.pob, length(which(pop.pob[,"S"]==0 & pop.pob[,"A"]>0)))
-		sex.rat.pob<-c(sex.rat.pob, length(which(pop.pob[,"S"]==0 & pop.pob[,"A"]>0))/length(which(pop.pob[,"S"]==1 & pop.pob[,"A"]>0)))
-		pop.pob<-age(pop.pob, sel, alpha, fsurv1, fsurv2)
-		pop.as<-repro(pop.as, spX=spX.as, spY=spX.as, init.p.var, h, alpha=alpha, beta=beta)
-		pop.as<-mdieoff(pop.as, msurv)
-		popsize.as<-c(popsize.as, length(which(pop.as[,"S"]==0 & pop.as[,"A"]>0)))
-		sex.rat.as<-c(sex.rat.as, length(which(pop.as[,"S"]==0 & pop.as[,"A"]>0))/length(which(pop.as[,"S"]==1 & pop.as[,"A"]>0)))
-		pop.as<-age(pop.as, sel, alpha, fsurv1, fsurv2)
-		pop.as<-disperse(pop.as, n.list.as, prob.d, spX.as)
-		if (plot==T) plotter(pop.as, popsize.as, spX=spX.as, spY=spX.as, sel.time=999, gens, 22)
-	}	
-	keep<-4:7
-	popsize.pob<-popsize.pob[keep]
-	sex.rat.pob<-sex.rat.pob[keep]
-	popsize.as<-popsize.as[keep]
-	sex.rat.as<-sex.rat.as[keep]
-	c(popsize.pob, sex.rat.pob, popsize.as, sex.rat.as)
+	print(pop)
 }
 
 plotter<-function(popmatrix, popsize, spX, spY, sel.time, gens, fid){
@@ -262,3 +291,4 @@ plotter<-function(popmatrix, popsize, spX, spY, sel.time, gens, fid){
 }
 
 #mother(h=0.3, init.b=-5, plot=T, gens=100)
+run<-mother(dem.pars=pars, init.b=-8.5, gens=10, sel.time=8, h=0.3)

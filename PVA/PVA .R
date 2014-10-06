@@ -1,4 +1,4 @@
-s.dir<-"~/GitHub/gtq/ABC/" #source directory
+s.dir<-"/Users/ellakelly/Documents/GitHub/gtq/ABC/" #source directory
 
 source(paste(s.dir, "Quoll_functions.R", sep=""))
 
@@ -11,7 +11,7 @@ load(paste(s.dir, "Kept_sims_poponlyhalfpcED.RData", sep=""))
 pars<-apply(gold[,1:6], 2, mean)
 
 #equilibrium population density 
-s.dir<-"~/GitHub/gtq/Priors/" #source directory
+s.dir<-"/Users/ellakelly/Documents/GitHub/gtq/Priors/" #source directory
 load(paste(s.dir, "init.density", sep=""))
 init.pop<-sum(test3[,3])
 
@@ -19,8 +19,8 @@ init.pop<-sum(test3[,3])
 #loop through values of init.b "n" times
 
 #input
-n <-100 #no. of iterations 	
-b<- c(-9.5, -9, -8.5, -8) #values of b
+n <-10 #no. of iterations 	
+b<- c(-8.5) #values of b
 #output
 e <-vector() # i loop output 
 pr<- vector() # j loop output
