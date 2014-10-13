@@ -133,12 +133,13 @@ repro<-function(popmat, spX, spY, init.p.var, h, alpha, beta){
 	female.list <- split(df , f= df$fXY) #list female B and HI values by space 
 	#mating (mean of B and HI values) 
 	mated<-mating(male.list, female.list, female)
-	female<- cbind(mated, female) # bind offspring B values to their mums
+	female<- cbind(mated, female) # bind offspring B values to their mums #### Instead assign XY vals based on fXY
 #density dependance
 	dd.off<- ddep1(x=fdens, beta, alpha)
 	off.no<-rbinom(nrow(female), 10, dd.off) # max offspring = 10
 #get info for next generation and combine
-	offspring<-matrix(female[rep(1:nrow(female), off.no),], ncol=9, dimnames=list(NULL, colnames(female)))
+	###Check the change Ben made here ###
+	offspring<-matrix(female[rep(1:nrow(female), off.no),], ncol=ncol(female), dimnames=list(NULL, colnames(female)))
 	if (is.null(nrow(offspring)) | is.na(nrow(offspring))) return(popmat)
 	offspring[,"B"]<-offspring[,"B.off"]
 	offspring[,"B"]<-rnorm(nrow(offspring), offspring[,"B"], (b.var/2)^0.5) #mid parent breeding values with variance of surviving offspring
@@ -255,7 +256,11 @@ mother<-function(n=init.pop, spX=10, spY=10, dem.pars, init.b=-5, init.p.var=10,
 	n.list<-neighbours.init(spX, spY) # create a list of neighbours for each cell (individual?)
 	popsize<-n
 	sel<-FALSE
+<<<<<<< HEAD:ABC/Quoll_functions_outbreeding_other.R
 	trans.pop<- trans.inds(n=1000, spX, spY, init.b=10, init.p.var, h)
+=======
+	trans.pop<- trans.inds(n=1000, spX, spY, init.b, init.p.var, h) # init.b will be something specific to "QLD" quolls, and n will be variable
+>>>>>>> FETCH_HEAD:ABC/Quoll_functions_outbreeding.R
 	for (g in 2:gens){
 		if (g<=(sel.time-2)) pop<-rbind(pop, trans.pop)
 		pop<-repro(popmat=pop, spX=spX, spY=spY, init.p.var=init.p.var, h=h, alpha=alpha, beta=beta) # females reproduce (density dep)
