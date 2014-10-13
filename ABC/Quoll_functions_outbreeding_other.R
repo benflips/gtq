@@ -255,7 +255,7 @@ mother<-function(n=init.pop, spX=10, spY=10, dem.pars, init.b=-5, init.p.var=10,
 	n.list<-neighbours.init(spX, spY) # create a list of neighbours for each cell (individual?)
 	popsize<-n
 	sel<-FALSE
-	trans.pop<- trans.inds(n=1000, spX, spY, init.b, init.p.var, h)
+	trans.pop<- trans.inds(n=1000, spX, spY, init.b=10, init.p.var, h)
 	for (g in 2:gens){
 		if (g<=(sel.time-2)) pop<-rbind(pop, trans.pop)
 		pop<-repro(popmat=pop, spX=spX, spY=spY, init.p.var=init.p.var, h=h, alpha=alpha, beta=beta) # females reproduce (density dep)
@@ -290,5 +290,5 @@ plotter<-function(popmatrix, popsize, spX, spY, sel.time, gens, fid){
 	#dev.off()
 }
 
-#mother(h=0.3, init.b=-5, plot=T, gens=100)
-run<-mother(dem.pars=pars, init.b=-8.5, gens=10, sel.time=8, h=0.3)
+mother(dem.pars=pars, h=0.3, init.b=-5, plot=T, gens=50, sel.time=20)
+#run<-mother(dem.pars=pars, init.b=-8.5, gens=10, sel.time=8, h=0.3, plot=T)
