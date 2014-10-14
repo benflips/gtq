@@ -1,7 +1,12 @@
-s.dir<-"/Users/ellakelly/Documents/GitHub/gtq/ABC/" #source directory
+s.dir<-"/Users/ellakelly/GitHub/gtq/ABC/" #source directory
 
-source(paste(s.dir, "Quoll_functions.R", sep=""))
+source(paste(s.dir, "Quoll_functions_outbreeding.R", sep=""))
 
+#### FOR BEN's COMP 
+
+#s.dir<-"/Users/ellakelly/Documents/GitHub/gtq/ABC/" #source directory
+
+#source(paste(s.dir, "Quoll_functions.R", sep=""))
 
 ###################################################################################
 ## Model Runs ##
@@ -11,7 +16,7 @@ load(paste(s.dir, "Kept_sims_poponlyhalfpcED.RData", sep=""))
 pars<-apply(gold[,1:6], 2, mean)
 
 #equilibrium population density 
-s.dir<-"/Users/ellakelly/Documents/GitHub/gtq/Priors/" #source directory
+s.dir<-"/Users/ellakelly/GitHub/gtq/Priors/" #source directory
 load(paste(s.dir, "init.density", sep=""))
 init.pop<-sum(test3[,3])
 

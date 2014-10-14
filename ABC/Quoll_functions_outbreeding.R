@@ -50,7 +50,7 @@ init.inds<-function(n, spX, spY, init.b, init.p.var, h){
 }
 
 ###translocated population ALL PUT IN 5x5 ON GRID
-trans.inds<-function(n, spX, spY, init.b, init.p.var, h){
+trans.inds<-function(n=nt, spX, spY, init.b, init.p.var, h){
 	Y<-rep(5, n) 
 	X<-rep(5, n) 
 	S<-rbinom(n, 1, 0.5) #sex
@@ -78,12 +78,23 @@ randomRows = function(df,n){
    return(df[sample(nrow(df),n,replace=TRUE),])
 }
 
+# subset males based on available females (replace=true)
 sample3<-function(list, density, spX, spY){
 	out<-vector("list", length=length(density))
 	for (i in 1:length(list)){
 	out[[i]]<-
-	if (is.null(density[i,])==T) return(NULL)
+	if ((density[i,])=="0") return(NULL)
 	else randomRows(list[[i]], density[i,])
+	}
+	out
+}
+	
+#subset females if males in cell = 0 	
+densequal<-function(mdens,fdens){
+	out<-matrix(nrow=length(fdens), ncol=1)
+for(i in 1:(length(fdens))){
+	if((mdens[i,])=="0") {out[i,]<-0}
+	else {out[i,]<- fdens[i,]}
 	}
 	out
 }
@@ -95,9 +106,11 @@ mating<-function(m,f,x){
 	fB<- unlist(sapply(f, `[[`, 1))
 	mHI<- unlist(sapply(m, `[[`, 2))
 	fHI<- unlist(sapply(f, `[[`, 2))
+	fX<- unlist(sapply(f, `[[`, 4))
+	fY<- unlist(sapply(f, `[[`, 5))
 	B.off<-rowMeans((cbind(mB,fB)), na.rm = FALSE, dims = 1)
 	HI.off<-rowMeans((cbind(mHI,fHI)), na.rm = FALSE, dims = 1)
-	out<-cbind(B.off, HI.off)
+	out<-cbind(B.off, HI.off,fX,fY)
 	out
 }
 
@@ -108,45 +121,41 @@ repro<-function(popmat, spX, spY, init.p.var, h, alpha, beta){
 	#browser()
 	b.var<-h*init.p.var
 	if (length(popmat[,1])==0) return(popmat)
-	# collect breeding females and their mates' B and HI values
+# collect breeding females and their mates' B and HI values
 	#males
 	male<-subset(popmat, popmat[,"S"]==1 & popmat[,"A"]>0) 
 	if (length(male)==0) return(popmat)
-	mdens<-table(factor(male[,"X"], levels=1:spX), factor(male[,"Y"], levels=1:spY)) #number of males present in each cell
-	#females
-	female<-subset(popmat, popmat[,"S"]==0 & popmat[,"A"]>0) #matrix of all adult females
-	dens<-table(factor(female[,"X"], levels=1:spX), factor(female[,"Y"], levels=1:spY)) #work out the density of females in each grid cell	
-	temp<-(female[,"Y"]-1)*spX+female[,"X"] #matrix indexes for male matrix and blist
-	female<-subset(female, mdens[temp]>0) # matrix of females with available males
-	if (nrow(female)==0) return(NULL)
-	#HIs & Bs
-	new.dens<-table(factor(female[,"X"], levels=1:spX), factor(female[,"Y"], levels=1:spY)) #work out the density of females in each grid cell	
-	fdens<- as.matrix(as.numeric(new.dens))
+	mdens<-as.matrix(as.vector(table(factor(male[,"X"], levels=1:spX), factor(male[,"Y"], levels=1:spY)))) #number of males present in each cell
 	B<-male[,"B"]
 	HI<-male[,"HI"]
 	XY<-(male[,"Y"]-1)*spX+male[,"X"]
 	df<-data.frame(B,HI,XY)
 	M.list <- split(df , f = df$XY)	#list males HI and Bd by space
-	male.list<-sample3(M.list, fdens, spX, spY) #sample depending on available females
+#females
+	female<-subset(popmat, popmat[,"S"]==0 & popmat[,"A"]>0) #matrix of all adult females
+	fdens<-as.matrix(as.vector(table(factor(female[,"X"], levels=1:spX), factor(female[,"Y"], levels=1:spY)))) #work out the density of females in each grid cell	
+	fdens<- densequal(mdens, fdens) #subset females if males in cell = zero
+	male.list<-sample3(M.list, fdens, spX, spY) #sample males depending on available females
 	fXY<-(female[,"X"]-1)*spX+female[,"Y"]
-	df<-data.frame(female[,"B"],female[,"HI"],fXY)
+	df<-data.frame(female[,"B"],female[,"HI"],fXY, female[,"X"], female[,"Y"])
 	female.list <- split(df , f= df$fXY) #list female B and HI values by space 
-	#mating (mean of B and HI values) 
+#mating (mean of B and HI values) 
 	mated<-mating(male.list, female.list, female)
-	female<- cbind(mated, female) # bind offspring B values to their mums
 #density dependance
 	dd.off<- ddep1(x=fdens, beta, alpha)
-	off.no<-rbinom(nrow(female), 10, dd.off) # max offspring = 10
+	off.no<-rbinom(nrow(mated), 10, dd.off) # max offspring = 10
+	off<-mated[rep(1:nrow(mated), off.no),]
 #get info for next generation and combine
-	offspring<-matrix(female[rep(1:nrow(female), off.no),], ncol=9, dimnames=list(NULL, colnames(female)))
+	offspring<- matrix(nrow=length(off), ncol=ncol(female), dimnames=list(NULL, colnames(female)))
 	if (is.null(nrow(offspring)) | is.na(nrow(offspring))) return(popmat)
-	offspring[,"B"]<-offspring[,"B.off"]
+	offspring[,"B"]<-off[,"B.off"]
 	offspring[,"B"]<-rnorm(nrow(offspring), offspring[,"B"], (b.var/2)^0.5) #mid parent breeding values with variance of surviving offspring
 	offspring[,"S"]<-rbinom(nrow(offspring), 1, 0.5) # random sex allocation
 	offspring[,"A"]<-rep(0, nrow(offspring))	# age=0
+	offspring[,"X"]<-off[,"fX"]
+	offspring[,"Y"]<-off[,"fY"]
 	offspring[,"P"]<-rnorm(nrow(offspring), offspring[,"B"], (init.p.var-b.var)^0.5) #offspring phenotypes
-	offspring[,"HI"]<-offspring[,"HI.off"]
-	offspring<-offspring[,-c(1,2)]
+	offspring[,"HI"]<-off[,"HI.off"]
 	popmat<-rbind(popmat, offspring)
 	popmat
 }
@@ -243,19 +252,18 @@ disperse<-function(popmatrix, n.list, prob.d, spX){
 # runs the model
 
 # dem.pars is a vector with alpha, fs1, fs2, msurv, beta, prob.d
-mother<-function(n=init.pop, spX=10, spY=10, dem.pars, init.b=-5, init.p.var=10, h=0.3, gens=50, sel.time=20, plot=FALSE, hybrid=0){
+mother<-function(n=init.pop, spX=10, spY=10, dem.pars, init.b=-5, init.p.var=10, h=0.3, gens=50, sel.time=20, plot=FALSE, hybrid=0, nt=100){
 	alpha<-dem.pars[1]
 	fsurv1<-dem.pars[2]
 	fsurv2<-dem.pars[3]
 	msurv<-dem.pars[4]
 	beta<-dem.pars[5]
-	prob.d<-dem.pars[6]
-
+	prob.d<-dem.pars[6] #assign dem.pars
 	pop<-init.inds(n, spX, spY, init.b, init.p.var, h) # create a population
 	n.list<-neighbours.init(spX, spY) # create a list of neighbours for each cell (individual?)
 	popsize<-n
 	sel<-FALSE
-	trans.pop<- trans.inds(n=1000, spX, spY, init.b, init.p.var, h)
+	trans.pop<- trans.inds(nt, spX, spY, init.b, init.p.var, h)# init.b will be something specific to "QLD" quolls, and n will be variable
 	for (g in 2:gens){
 		if (g<=(sel.time-2)) pop<-rbind(pop, trans.pop)
 		pop<-repro(popmat=pop, spX=spX, spY=spY, init.p.var=init.p.var, h=h, alpha=alpha, beta=beta) # females reproduce (density dep)
@@ -291,4 +299,4 @@ plotter<-function(popmatrix, popsize, spX, spY, sel.time, gens, fid){
 }
 
 #mother(h=0.3, init.b=-5, plot=T, gens=100)
-run<-mother(dem.pars=pars, init.b=-8.5, gens=10, sel.time=8, h=0.3)
+run<-mother(dem.pars=pars, init.b=-8.5, gens=3, sel.time=1, h=0.3)
