@@ -89,7 +89,7 @@ sample3<-function(list, density, spX, spY){
 	out
 }
 	
-#subset females if males in cell = 0 	
+#subset females if there are no males in a cell 	
 densequal<-function(mdens,fdens){
 	out<-matrix(nrow=length(fdens), ncol=1)
 for(i in 1:(length(fdens))){
@@ -131,7 +131,7 @@ repro<-function(popmat, spX, spY, init.p.var, h, alpha, beta){
 	XY<-(male[,"Y"]-1)*spX+male[,"X"]
 	df<-data.frame(B,HI,XY)
 	M.list <- split(df , f = df$XY)	#list males HI and Bd by space
-#females
+	#females
 	female<-subset(popmat, popmat[,"S"]==0 & popmat[,"A"]>0) #matrix of all adult females
 	fdens<-as.matrix(as.vector(table(factor(female[,"X"], levels=1:spX), factor(female[,"Y"], levels=1:spY)))) #work out the density of females in each grid cell	
 	fdens<- densequal(mdens, fdens) #subset females if males in cell = zero
@@ -252,7 +252,7 @@ disperse<-function(popmatrix, n.list, prob.d, spX){
 # runs the model
 
 # dem.pars is a vector with alpha, fs1, fs2, msurv, beta, prob.d
-mother<-function(n=init.pop, spX=10, spY=10, dem.pars, init.b=-5, init.p.var=10, h=0.3, gens=50, sel.time=20, plot=FALSE, hybrid=0, nt=100){
+mother<-function(n=init.pop, spX=10, spY=10, dem.pars, init.b=-5, init.p.var=10, h=0.3, gens=50, sel.time=20, plot=FALSE, hybrid=0, nt=100, trans.time=19){
 	alpha<-dem.pars[1]
 	fsurv1<-dem.pars[2]
 	fsurv2<-dem.pars[3]
@@ -265,7 +265,7 @@ mother<-function(n=init.pop, spX=10, spY=10, dem.pars, init.b=-5, init.p.var=10,
 	sel<-FALSE
 	trans.pop<- trans.inds(nt, spX, spY, init.b, init.p.var, h)# init.b will be something specific to "QLD" quolls, and n will be variable
 	for (g in 2:gens){
-		if (g<=(sel.time-2)) pop<-rbind(pop, trans.pop)
+		if (g=trans.time) pop<-rbind(pop, trans.pop)
 		pop<-repro(popmat=pop, spX=spX, spY=spY, init.p.var=init.p.var, h=h, alpha=alpha, beta=beta) # females reproduce (density dep)
 		pop<-mdieoff(pop, msurv) # males die off
 		if (g>sel.time) sel<-TRUE # have toads arrived?
@@ -298,5 +298,4 @@ plotter<-function(popmatrix, popsize, spX, spY, sel.time, gens, fid){
 	#dev.off()
 }
 
-#mother(h=0.3, init.b=-5, plot=T, gens=100)
-run<-mother(dem.pars=pars, init.b=-8.5, gens=3, sel.time=1, h=0.3)
+mother(dem.pars=pars, init.b=-8.5, gens=3, sel.time=1, h=0.3)

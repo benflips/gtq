@@ -26,13 +26,14 @@ init.pop<-sum(test3[,3])
 #input
 n <-10 #no. of iterations 	
 b<- c(-8.5) #values of b
+
 #output
 e <-vector() # i loop output 
 pr<- vector() # j loop output
 
 for(j in b) {
 		for (i in 1:n){
-			run<-mother(dem.pars=pars, init.b=j, gens=50, sel.time=20, h=0.3)	
+			run<-mother(dem.pars=pars, init.b=j, gens=50, sel.time=20, h=0.3, nt=100, trans.time=19)	
 			e[i]<-c(run)
 		}
 	prob.e<- length(e[e==TRUE])/n
