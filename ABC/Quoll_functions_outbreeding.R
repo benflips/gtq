@@ -1,44 +1,32 @@
 ### Functions and model for doing PVA of quolls under evolution ###
 
 ###Note: execution of quantitative genetics is (badly) incorrect and needs to be fixed before evolutionary scenarios can be implemented
+
 ##fitted values FOR MY LAPTOP
 s.dir<-"/Users/ellakelly/GitHub/gtq/ABC/" #source directory
-
-source(paste(s.dir, "Quoll_functions.R", sep=""))
 
 #### FOR BEN's COMP 
 
 #s.dir<-"/Users/ellakelly/Documents/GitHub/gtq/ABC/" #source directory
 
-#source(paste(s.dir, "Quoll_functions.R", sep=""))
-
-
 ###################################################################################
 ## Model Runs ##
 
-# fitted values
+# fitted values for survival and other things
 load(paste(s.dir, "Kept_sims_poponlyhalfpcED.RData", sep=""))
 pars<-apply(gold[,1:6], 2, mean)
 
-
-
-#equilibrium population density 
+# equilibrium population density 
 s.dir<-"/Users/ellakelly/GitHub/gtq/Priors/" #source directory
 load(paste(s.dir, "init.density", sep=""))
 init.pop<-sum(test3[,3])
-
-### Functions and model for doing PVA of quolls under evolution ###
-
-###Note: execution of quantitative genetics is (badly) incorrect and needs to be fixed before evolutionary scenarios can be implemented
-
-#### Ella edited 12/8/14
 
 # Initialises a matrix with n individuals
 # individuals have a location (spX, spY) and are generated from
 # initial mean breeding value, initial variance in breeding value, and heritability
 init.inds<-function(n, spX, spY, init.b, init.p.var, h){
 	random<-data.frame(Y=test3[,1], X=test3[,2], dens=sample(test3[,3]))
-	Y<-rep(random[,1],times=random[,"dens"])
+	Y<-rep(random[,1],times=random[,"dens"]) #X and Y from equilibrium pop
 	X<-rep(random[,2],times=random[,"dens"])
 	S<-rbinom(n, 1, 0.5) #sex
 	A<-rep(1, n) #age
@@ -49,8 +37,8 @@ init.inds<-function(n, spX, spY, init.b, init.p.var, h){
 	cbind(X, Y, S, A, B, P, HI)	
 }
 
-###translocated population ALL PUT IN 5x5 ON GRID
-trans.inds<-function(n=nt, spX, spY, init.b, init.p.var, h){
+###translocated population: ALL PUT IN 5x5 ON GRID
+trans.inds<-function(n=nT, spX, spY, init.b, init.p.var, h){
 	Y<-rep(5, n) 
 	X<-rep(5, n) 
 	S<-rbinom(n, 1, 0.5) #sex
@@ -107,7 +95,7 @@ mating<-function(m,f,x){
 	mHI<- unlist(sapply(m, `[[`, 2))
 	fHI<- unlist(sapply(f, `[[`, 2))
 	fX<- unlist(sapply(f, `[[`, 4))
-	fY<- unlist(sapply(f, `[[`, 5))
+	fY<- unlist(sapply(f, `[[`, 5))	
 	B.off<-rowMeans((cbind(mB,fB)), na.rm = FALSE, dims = 1)
 	HI.off<-rowMeans((cbind(mHI,fHI)), na.rm = FALSE, dims = 1)
 	out<-cbind(B.off, HI.off,fX,fY)
@@ -133,12 +121,16 @@ repro<-function(popmat, spX, spY, init.p.var, h, alpha, beta){
 	M.list <- split(df , f = df$XY)	#list males HI and Bd by space
 	#females
 	female<-subset(popmat, popmat[,"S"]==0 & popmat[,"A"]>0) #matrix of all adult females
+	if (length(female)==0) return(popmat)
 	fdens<-as.matrix(as.vector(table(factor(female[,"X"], levels=1:spX), factor(female[,"Y"], levels=1:spY)))) #work out the density of females in each grid cell	
 	fdens<- densequal(mdens, fdens) #subset females if males in cell = zero
+	if (sum(fdens)==0) return(popmat)
+# who's available for breeding?	
 	male.list<-sample3(M.list, fdens, spX, spY) #sample males depending on available females
 	fXY<-(female[,"X"]-1)*spX+female[,"Y"]
 	df<-data.frame(female[,"B"],female[,"HI"],fXY, female[,"X"], female[,"Y"])
 	female.list <- split(df , f= df$fXY) #list female B and HI values by space 
+	female.list <- sample3(female.list, fdens, spX, spY) #sample females depending on fdens
 #mating (mean of B and HI values) 
 	mated<-mating(male.list, female.list, female)
 #density dependance
@@ -252,7 +244,7 @@ disperse<-function(popmatrix, n.list, prob.d, spX){
 # runs the model
 
 # dem.pars is a vector with alpha, fs1, fs2, msurv, beta, prob.d
-mother<-function(n=init.pop, spX=10, spY=10, dem.pars, init.b=-5, init.p.var=10, h=0.3, gens=50, sel.time=20, plot=FALSE, hybrid=0, nt=100, trans.time=19){
+mother<-function(n=init.pop, spX=10, spY=10, dem.pars, init.b=-5, init.p.var=10, h=0.3, gens=50, sel.time=20, plot=FALSE, hybrid=0, nT=100, trans.time=14){
 	alpha<-dem.pars[1]
 	fsurv1<-dem.pars[2]
 	fsurv2<-dem.pars[3]
@@ -263,9 +255,9 @@ mother<-function(n=init.pop, spX=10, spY=10, dem.pars, init.b=-5, init.p.var=10,
 	n.list<-neighbours.init(spX, spY) # create a list of neighbours for each cell (individual?)
 	popsize<-n
 	sel<-FALSE
-	trans.pop<- trans.inds(nt, spX, spY, init.b, init.p.var, h)# init.b will be something specific to "QLD" quolls, and n will be variable
+	trans.pop<- trans.inds(nT, spX, spY, init.b, init.p.var, h)# init.b will be something specific to "QLD" quolls, and n will be variable
 	for (g in 2:gens){
-		if (g=trans.time) pop<-rbind(pop, trans.pop)
+		if (g==trans.time) pop<-rbind(pop, trans.pop)
 		pop<-repro(popmat=pop, spX=spX, spY=spY, init.p.var=init.p.var, h=h, alpha=alpha, beta=beta) # females reproduce (density dep)
 		pop<-mdieoff(pop, msurv) # males die off
 		if (g>sel.time) sel<-TRUE # have toads arrived?
@@ -275,13 +267,14 @@ mother<-function(n=init.pop, spX=10, spY=10, dem.pars, init.b=-5, init.p.var=10,
 			pe<-TRUE
 			print(paste("The population went extinct at generation ", g, ":-("))
 			break	
-		} else {pe<-FALSE }
+		} else {pe<-FALSE			
+ 			}
 		popsize<-c(popsize, length(pop[,1])) # new population size appended to popsize vector
 		if (plot==T) plotter(pop, popsize, spX, spY, sel.time, gens, fid=g)
 	}
-
-	#list(pop, popsize)	
-	print(pop)
+if (length(pop[,1])>0) {		
+		print(mean(pop[,"B"])) ## print final B values for surviving populations
+ 		}
 }
 
 plotter<-function(popmatrix, popsize, spX, spY, sel.time, gens, fid){
@@ -298,4 +291,4 @@ plotter<-function(popmatrix, popsize, spX, spY, sel.time, gens, fid){
 	#dev.off()
 }
 
-mother(dem.pars=pars, init.b=-8.5, gens=3, sel.time=1, h=0.3)
+mother(dem.pars=pars, init.b=-8.5, gens=10, sel.time=5, h=0.3, plot=T)

@@ -1,2 +1,3 @@
 load("/Users/ellakelly/Documents/PhD/Model/gtq/ABC/Kept_sims_poponlyhalfpcED.RData")
 names
+load("/Users/ellakelly/GitHub/gtq/ABC/Kept_sims_poponlyhalfpcED.RData")
