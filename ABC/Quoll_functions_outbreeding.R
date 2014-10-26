@@ -161,11 +161,16 @@ mdieoff<-function(popmatrix, msurv){
 	popmatrix
 }
 
-#Hybrid index fitness
+#Hybrid index fitness (F1 lowered fitness)
 HI_fitness<-function(HI, s, beta){
   W<-1-s*(4*HI*(1-HI))^beta
   W
 }
+#Or other function (where F2 have lowered fitness)
+#HI_fitness<-function(HI, z){
+# W<-(1-z)+zCos(x*4pi)
+ #  W
+#}
 
 #ages or kills individuals based on age-specific survival plus fitness
 age<-function(popmatrix, selection=F, alpha, fsurv1, fsurv2){
@@ -181,9 +186,9 @@ age<-function(popmatrix, selection=F, alpha, fsurv1, fsurv2){
 	#Survival of juvs only if toads are present (otherwise survival=1)
 #Juvenile survival
 	#hybrid index
-	Juv<-subset(popmatrix, popmatrix[,"A"]==0)
-	psurv<- HI_fitness(Juv[,"HI"], 1, 10)
-	Juv<-subset(Juv, rbinom(length(Juv[,1]), 1, psurv)==1) #surviving juveniles
+	#Juv<-subset(popmatrix, popmatrix[,"A"]==0)
+	psurv<- HI_fitness(popmatrix[,"HI"], 1, 10)
+	popmatrix<-subset(popmatrix, rbinom(length(popmatrix[,1]), 1, psurv)==1) #surviving juveniles
 	#if toads are present	
 	Juv<-subset(popmatrix, popmatrix[,"A"]==0)
 	psurv<-1
@@ -291,4 +296,4 @@ plotter<-function(popmatrix, popsize, spX, spY, sel.time, gens, fid){
 	#dev.off()
 }
 
-mother(dem.pars=pars, init.b=-8.5, gens=10, sel.time=5, h=0.3, plot=T)
+mother(dem.pars=pars, init.b=-8.5, gens=50, sel.time=20, h=0.3, plot=T)

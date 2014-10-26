@@ -1,3 +1,5 @@
+
+##fitted values FOR MY LAPTOP
 s.dir<-"/Users/ellakelly/GitHub/gtq/ABC/" #source directory
 
 source(paste(s.dir, "Quoll_functions_outbreeding.R", sep=""))
@@ -6,7 +8,7 @@ source(paste(s.dir, "Quoll_functions_outbreeding.R", sep=""))
 
 #s.dir<-"/Users/ellakelly/Documents/GitHub/gtq/ABC/" #source directory
 
-#source(paste(s.dir, "Quoll_functions.R", sep=""))
+#source(paste(s.dir, "Quoll_functions_outbreeding.R", sep=""))
 
 ###################################################################################
 ## Model Runs ##
@@ -24,7 +26,7 @@ init.pop<-sum(test3[,3])
 #loop through values of init.b "n" times
 
 #input
-n <-10 #no. of iterations 	
+n <-1 #no. of iterations 	
 b<- c(-8.5) #values of b
 
 #output
@@ -33,7 +35,7 @@ pr<- vector() # j loop output
 
 for(j in b) {
 		for (i in 1:n){
-			run<-mother(dem.pars=pars, init.b=j, gens=50, sel.time=20, h=0.3, nt=100, trans.time=19)	
+			run<-mother(dem.pars=pars, init.b=j, gens=50, sel.time=20, h=0.3, nt=100, trans.time=140)	
 			e[i]<-c(run)
 		}
 	prob.e<- length(e[e==TRUE])/n
