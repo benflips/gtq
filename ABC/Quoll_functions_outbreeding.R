@@ -277,7 +277,7 @@ mother<-function(n=init.pop, spX=10, spY=10, dem.pars, init.b=-5, init.p.var=10,
 		if (plot==T) plotter(pop, popsize, spX, spY, sel.time, gens, fid=g)
 	}
 if (length(pop[,1])>0) {		
-		print(mean(pop[,"B"])) ## print final B values for surviving populations
+		write.csv(pop, file="survivors.csv") ## save information of surviving populations
  		}
 }
 

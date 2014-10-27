@@ -1,0 +1,6 @@
+load("/Users/ellakelly/GitHub/gtq/Priors/init.density")
+print(init.density)
+x<-load("/Users/ellakelly/GitHub/gtq/Priors/init.density")
+print(x)
+test3[3]
+sum(test3[3])
