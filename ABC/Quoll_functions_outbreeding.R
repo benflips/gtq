@@ -56,7 +56,7 @@ fit.func<-function(P){
 	P>0
 }
 
-#generalised density dependent decay (where alpha < 0)
+#generalised density dependent decay (where alpha < 0) #beta~114 and alpha~-1
 ddep1<- function(x, beta, alpha) {
 	1/(1+exp(-alpha*(x-beta)))
 }
@@ -186,14 +186,13 @@ age<-function(popmatrix, selection=F, alpha, fsurv1, fsurv2){
 	#Survival of juvs only if toads are present (otherwise survival=1)
 #Juvenile survival
 	#hybrid index
-	#Juv<-subset(popmatrix, popmatrix[,"A"]==0)
-	psurv<- HI_fitness(popmatrix[,"HI"], 1, 10)
-	popmatrix<-subset(popmatrix, rbinom(length(popmatrix[,1]), 1, psurv)==1) #surviving juveniles
-	#if toads are present	
 	Juv<-subset(popmatrix, popmatrix[,"A"]==0)
-	psurv<-1
-	if (selection==T) psurv<-psurv*fit.func(Juv[,"P"]) #toad relative fitness
+	psurv<- HI_fitness(Juv[,"HI"], 1, 10)
 	Juv<-subset(Juv, rbinom(length(Juv[,1]), 1, psurv)==1) #surviving juveniles
+	#if toads are present	
+	psurv<-1
+	if (selection==T) psurv<-psurv*fit.func(popmatrix[,"P"]) #toad relative fitness
+	popmatrix<-subset(popmatrix, rbinom(length(popmatrix[,1]), 1, psurv)==1) #surviving individuals
 	# gather survivors, age them and return
 	popmatrix<-rbind(Ad, Juv)
 	popmatrix[,"A"]<-popmatrix[,"A"]+1
