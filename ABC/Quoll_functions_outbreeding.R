@@ -15,6 +15,7 @@ s.dir<-"/Users/ellakelly/GitHub/gtq/ABC/" #source directory
 # fitted values for survival and other things
 load(paste(s.dir, "Kept_sims_poponlyhalfpcED.RData", sep=""))
 pars<-apply(gold[,1:6], 2, mean)
+pars["alpha"]<-mean(gold[,"alpha"][gold[,"alpha"]>-0.5]) # excluding the lower bounds of alpha
 
 # equilibrium population density 
 s.dir<-"/Users/ellakelly/GitHub/gtq/Priors/" #source directory
