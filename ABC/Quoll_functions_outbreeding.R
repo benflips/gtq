@@ -3,30 +3,25 @@
 ###Note: execution of quantitative genetics is (badly) incorrect and needs to be fixed before evolutionary scenarios can be implemented
 
 ##fitted values FOR MY LAPTOP
-s.dir<-"/Users/ellakelly/GitHub/gtq/ABC/" #source directory
-
-#### FOR BEN's COMP 
-
-#s.dir<-"/Users/ellakelly/Documents/GitHub/gtq/ABC/" #source directory
+s.dir<-"~/GitHub/gtq/" #source directory
 
 ###################################################################################
 ## Model Runs ##
 
 # fitted values for survival and other things
-load(paste(s.dir, "Kept_sims_poponlyhalfpcED.RData", sep=""))
+load(paste(s.dir, "ABC/Kept_sims_poponlyhalfpcED.RData", sep=""))
 pars<-apply(gold[,1:6], 2, mean)
 pars["alpha"]<-mean(gold[,"alpha"][gold[,"alpha"]>-0.5]) # excluding the lower bounds of alpha
 
-# equilibrium population density 
-s.dir<-"/Users/ellakelly/GitHub/gtq/Priors/" #source directory
-load(paste(s.dir, "init.density", sep=""))
+# equilibrium population density distribution
+load(paste(s.dir, "Priors/init.density", sep=""))
 init.pop<-sum(test3[,3])
 
 # Initialises a matrix with n individuals
 # individuals have a location (spX, spY) and are generated from
 # initial mean breeding value, initial variance in breeding value, and heritability
 init.inds<-function(n, spX, spY, init.b, init.p.var, h){
-	random<-data.frame(Y=test3[,1], X=test3[,2], dens=sample(test3[,3]))
+	random<-cbind(Y=test3[,1], X=test3[,2], dens=sample(test3[,3]))
 	Y<-rep(random[,1],times=random[,"dens"]) #X and Y from equilibrium pop
 	X<-rep(random[,2],times=random[,"dens"])
 	S<-rbinom(n, 1, 0.5) #sex
@@ -62,29 +57,26 @@ ddep1<- function(x, beta, alpha) {
 	1/(1+exp(-alpha*(x-beta)))
 }
 
-#sampling males
-randomRows = function(df,n){
-   return(df[sample(nrow(df),n,replace=TRUE),])
-}
 
 # subset males based on available females (replace=true)
-sample3<-function(list, density, spX, spY){
-	out<-vector("list", length=length(density))
-	for (i in 1:length(list)){
-	out[[i]]<-
-	if ((density[i,])=="0") return(NULL)
-	else randomRows(list[[i]], density[i,])
+sample3<-function(mlist, fdens, spX, spY){
+	#sampling males
+	randomRows = function(dframe,n){
+	   dframe[sample(nrow(dframe),n,replace=TRUE),]
+	}
+	
+	out<-vector("list", length=length(fdens))
+	for (i in 1:length(mlist)){
+		if ((fdens[i,])==0) out[[i]]<-NULL
+		else randomRows(mlist[[i]], fdens[i,])
 	}
 	out
 }
 	
 #subset females if there are no males in a cell 	
 densequal<-function(mdens,fdens){
-	out<-matrix(nrow=length(fdens), ncol=1)
-for(i in 1:(length(fdens))){
-	if((mdens[i,])=="0") {out[i,]<-0}
-	else {out[i,]<- fdens[i,]}
-	}
+	out<-ifelse(mdens==0, 0, fdens)
+	out<-matrix(out, ncol=1)
 	out
 }
 	
