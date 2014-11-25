@@ -26,8 +26,8 @@ init.pop<-sum(test3[,3])
 #loop through values of init.b "n" times
 
 #input
-n <-1 #no. of iterations 	
-b<- c(-8.5) #values of b
+n <-100 #no. of iterations 	
+b<- c(-11,-10.5,-10,-9.5,-9) #values of b
 
 #output
 e <-vector() # i loop output 
@@ -35,7 +35,7 @@ pr<- vector() # j loop output
 
 for(j in b) {
 		for (i in 1:n){
-			run<-mother(dem.pars=pars, init.b=-8.5, gens=50, sel.time=20, h=0.3, plot=T)
+			run<-mother(dem.pars=pars, init.b=b, gens=50, sel.time=20, h=0.3, plot=T)
 			e[i]<-c(run)
 		}
 	prob.e<- length(e[e==TRUE])/n

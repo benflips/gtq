@@ -289,4 +289,4 @@ plotter<-function(popmatrix, popsize, spX, spY, sel.time, gens, fid){
 	#dev.off()
 }
 
-mother(dem.pars=pars, init.b=-8.5, gens=50, sel.time=20, h=0.3, plot=T)
+#mother(dem.pars=pars, init.b=-8.5, gens=50, sel.time=20, h=0.3, plot=T)
