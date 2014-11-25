@@ -67,8 +67,8 @@ sample3<-function(mlist, fdens, spX, spY){
 	
 	out<-vector("list", length=length(fdens))
 	for (i in 1:length(mlist)){
-		if ((fdens[i,])==0) out[[i]]<-NULL
-		else randomRows(mlist[[i]], fdens[i,])
+		if ((fdens[i])==0) next
+		else out[[i]]<-randomRows(mlist[[i]], fdens[i])
 	}
 	out
 }
@@ -81,8 +81,8 @@ densequal<-function(mdens,fdens){
 }
 	
 #create matrix with midparent value and hybrid index	
-mating<-function(m,f,x){
-	out<-matrix("numeric", ncol=2, nrow=length(x))
+mating<-function(m,f,nf){
+	out<-matrix("numeric", ncol=2, nrow=nf)
 	mB<- unlist(sapply(m, `[[`, 1))
 	fB<- unlist(sapply(f, `[[`, 1))
 	mHI<- unlist(sapply(m, `[[`, 2))
@@ -109,9 +109,9 @@ repro<-function(popmat, spX, spY, init.p.var, h, alpha, beta){
 	mdens<-as.matrix(as.vector(table(factor(male[,"X"], levels=1:spX), factor(male[,"Y"], levels=1:spY)))) #number of males present in each cell
 	B<-male[,"B"]
 	HI<-male[,"HI"]
-	XY<-(male[,"Y"]-1)*spX+male[,"X"]
-	df<-data.frame(B,HI,XY)
-	M.list <- split(df , f = df$XY)	#list males HI and Bd by space
+	XY<-factor((male[,"Y"]-1)*spX+male[,"X"], levels=as.character(1:(spX*spY)))
+	df.m<-data.frame(B,HI,XY)
+	M.list <- split(df.m , f = df.m$XY)	#list males HI and Bd by space
 	#females
 	female<-subset(popmat, popmat[,"S"]==0 & popmat[,"A"]>0) #matrix of all adult females
 	if (length(female)==0) return(popmat)
@@ -120,14 +120,14 @@ repro<-function(popmat, spX, spY, init.p.var, h, alpha, beta){
 	if (sum(fdens)==0) return(popmat)
 # who's available for breeding?	
 	male.list<-sample3(M.list, fdens, spX, spY) #sample males depending on available females
-	fXY<-(female[,"X"]-1)*spX+female[,"Y"]
-	df<-data.frame(female[,"B"],female[,"HI"],fXY, female[,"X"], female[,"Y"])
-	female.list <- split(df , f= df$fXY) #list female B and HI values by space 
+	fXY<-factor((female[,"Y"]-1)*spX+female[,"X"], levels=as.character(1:(spX*spY)))
+	df.fem<-data.frame(female[,"B"],female[,"HI"],fXY, female[,"X"], female[,"Y"])
+	female.list <- split(df.fem , f= df.fem$fXY) #list female B and HI values by space 
 	female.list <- sample3(female.list, fdens, spX, spY) #sample females depending on fdens
-#mating (mean of B and HI values) 
-	mated<-mating(male.list, female.list, female)
-#density dependance
-	dd.off<- ddep1(x=fdens, beta, alpha)
+#mating (mean of B and HI values)
+	mated<-mating(male.list, female.list, sum(fdens))
+	#density dependance
+	dd.off<- ddep1(x=fdens, beta, alpha)[rep(1:length(fdens), fdens)]
 	off.no<-rbinom(nrow(mated), 10, dd.off) # max offspring = 10
 	off<-mated[rep(1:nrow(mated), off.no),]
 #get info for next generation and combine
@@ -242,6 +242,7 @@ disperse<-function(popmatrix, n.list, prob.d, spX){
 
 # dem.pars is a vector with alpha, fs1, fs2, msurv, beta, prob.d
 mother<-function(n=init.pop, spX=10, spY=10, dem.pars, init.b=-5, init.p.var=10, h=0.3, gens=50, sel.time=20, plot=FALSE, hybrid=0, nT=100, trans.time=14){
+	#browser()
 	alpha<-dem.pars[1]
 	fsurv1<-dem.pars[2]
 	fsurv2<-dem.pars[3]
