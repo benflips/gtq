@@ -168,7 +168,7 @@ HI_fitness<-function(HI, s, beta){
 #ages or kills individuals based on age-specific survival plus fitness
 age<-function(popmatrix, selection=F, alpha, fsurv1, fsurv2){
 	if (length(popmatrix[,1])==0) return(popmatrix)
-	#Survival of adults
+#Adult survival
 	Ad<-subset(popmatrix, popmatrix[,"A"]>0) #Grabs all adults
 	psurv<-rep(0, length(Ad[,1])) 
 	psurv[which(Ad[,"S"]==0 & Ad[,"A"]==1)]<-fsurv1 #one year old females
@@ -176,18 +176,17 @@ age<-function(popmatrix, selection=F, alpha, fsurv1, fsurv2){
 	psurv[which(Ad[,"S"]==1 & Ad[,"A"]==1)]<-1 #one year old males (already gone through die off)
 	if (selection==T) psurv<-psurv*fit.func(Ad[,"P"]) #toad relative fitness
 	Ad<-subset(Ad, rbinom(length(Ad[,1]), 1, psurv)==1) # probabilistic survival
-	#Survival of juvs only if toads are present (otherwise survival=1)
 #Juvenile survival
 	#hybrid index
 	Juv<-subset(popmatrix, popmatrix[,"A"]==0)
-	psurv<- HI_fitness(Juv[,"HI"], 1, 10)
-	Juv<-subset(Juv, rbinom(length(Juv[,1]), 1, psurv)==1) #surviving juveniles
-	#if toads are present	
+	##psurv<- HI_fitness(Juv[,"HI"], 1, 10)
+	#Juv<-subset(Juv, rbinom(length(Juv[,1]), 1, psurv)==1) #surviving juveniles	
+#if toads are present	
+	popmatrix<-rbind(Ad, Juv)
 	psurv<-1
 	if (selection==T) psurv<-psurv*fit.func(popmatrix[,"P"]) #toad relative fitness
 	popmatrix<-subset(popmatrix, rbinom(length(popmatrix[,1]), 1, psurv)==1) #surviving individuals
 	# gather survivors, age them and return
-	popmatrix<-rbind(Ad, Juv)
 	popmatrix[,"A"]<-popmatrix[,"A"]+1
 	popmatrix
 }
@@ -253,9 +252,9 @@ mother<-function(n=init.pop, spX=10, spY=10, dem.pars, init.b=-5, init.p.var=10,
 	n.list<-neighbours.init(spX, spY) # create a list of neighbours for each cell (individual?)
 	popsize<-n
 	sel<-FALSE
-	trans.pop<- trans.inds(nT, spX, spY, init.b, init.p.var, h)# init.b will be something specific to "QLD" quolls, and n will be variable
+	#trans.pop<- trans.inds(nT, spX, spY, init.b, init.p.var, h)# init.b will be something specific to "QLD" quolls, and n will be variable
 	for (g in 2:gens){
-		if (g==trans.time) pop<-rbind(pop, trans.pop)
+		#if (g==trans.time) pop<-rbind(pop, trans.pop)
 		pop<-repro(popmat=pop, spX=spX, spY=spY, init.p.var=init.p.var, h=h, alpha=alpha, beta=beta) # females reproduce (density dep)
 		pop<-mdieoff(pop, msurv) # males die off
 		if (g>sel.time) sel<-TRUE # have toads arrived?
@@ -270,9 +269,10 @@ mother<-function(n=init.pop, spX=10, spY=10, dem.pars, init.b=-5, init.p.var=10,
 		popsize<-c(popsize, length(pop[,1])) # new population size appended to popsize vector
 		if (plot==T) plotter(pop, popsize, spX, spY, sel.time, gens, fid=g)
 	}
-if (length(pop[,1])>0) {		
-		write.csv(pop, file="survivors.csv") ## save information of surviving populations
- 		}
+#if (length(pop[,1])>0) {		
+	#	write.csv(pop, file="survivors.csv") ## save information of surviving populations
+ 	#	}
+ 		pe
 }
 
 plotter<-function(popmatrix, popsize, spX, spY, sel.time, gens, fid){
