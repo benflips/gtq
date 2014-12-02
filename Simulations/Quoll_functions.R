@@ -54,7 +54,7 @@ fit.func<-function(P){
 	P>0
 }
 
-#generalised density dependent decay (where alpha < 0) #beta~114 and alpha~-1
+#generalised density dependent decay (where alpha < 0) #beta~114 and alpha~-1 which = 15.6ha grid cell
 ddep1<- function(x, beta, alpha) {
 	1/(1+exp(-alpha*(x-beta)))
 }
@@ -271,10 +271,10 @@ mother<-function(n=init.pop, spX=10, spY=10, dem.pars, init.b=-5, init.p.var=10,
 		popsize<-c(popsize, length(pop[,1])) # new population size appended to popsize vector
 		if (plot==T) plotter(pop, popsize, spX, spY, sel.time, gens, fid=g)
 	}
-if (length(pop[,1])>0) {		
-		return(pop) ## save information of surviving populations
- 		}
- 		pe
+# write surviving population matrixes
+#if (length(pop[,1])>0) {		
+	#	write.table(pop, file=paste("survivors", i ,".csv"), sep="," ) ## save information of surviving populations
+ 	#	}
 }
 
 plotter<-function(popmatrix, popsize, spX, spY, sel.time, gens, fid){
@@ -291,4 +291,5 @@ plotter<-function(popmatrix, popsize, spX, spY, sel.time, gens, fid){
 	#dev.off()
 }
 
-mother(dem.pars=pars, init.b=-8.5, gens=5, sel.time=20, h=0.3, plot=T)
+#mother(dem.pars=pars, init.b=-10.75, gens=50, sel.time=20, h=0.3, plot=T)
+
