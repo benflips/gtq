@@ -31,22 +31,17 @@ init.inds<-function(n, spX, spY, init.b, init.p.var, h){
 	b.var<-h*init.p.var
 	B<-rnorm(n, init.b, b.var^0.5) # breeding values
 	P<-rnorm(n, B, (init.p.var-b.var)^0.5)
-	HI<-rep(0, n) #hybrid index, all start at 0
+	HI<-rep(1, n) #hybrid index, all start at 0
 	cbind(X, Y, S, A, B, P, HI)	
 }
 
 ###translocated population: ALL PUT IN 5x5 ON GRID
-trans.inds<-function(n=nT, spX, spY, init.b, init.p.var, h){
-	Y<-rep(5, n) 
-	X<-rep(5, n) 
-	S<-rbinom(n, 1, 0.5) #sex
-	A<-rep(1, n) #age
-	b.var<-h*init.p.var
-	B<-rnorm(n, init.b, b.var^0.5) # breeding values
-	P<-rnorm(n, B, (init.p.var-b.var)^0.5)
-	HI<-rep(1, n) #hybrid index, all start at 0
-	cbind(X, Y, S, A, B, P, HI)	
-}
+setwd("~/GitHub/gtq/Simulations/")
+smart<-read.csv("ToadSmart.csv")
+randomRows = function(dframe,n){
+	   dframe[sample(nrow(dframe),n,replace=FALSE),]
+	}
+smart<-randomRows(smart, n)
 
 # Function that defines relationship between Phenotype and Fitness (survival)
 # threshold: P>0 survives, P<0 dies
@@ -181,8 +176,8 @@ age<-function(popmatrix, selection=F, alpha, fsurv1, fsurv2){
 #Juvenile survival
 	#hybrid index
 	Juv<-subset(popmatrix, popmatrix[,"A"]==0)
-	##psurv<- HI_fitness(Juv[,"HI"], 1, 10)
-	#Juv<-subset(Juv, rbinom(length(Juv[,1]), 1, psurv)==1) #surviving juveniles	
+	psurv<- HI_fitness(Juv[,"HI"], 1, 10)
+	Juv<-subset(Juv, rbinom(length(Juv[,1]), 1, psurv)==1) #surviving juveniles	
 #if toads are present	
 	popmatrix<-rbind(Ad, Juv)
 	psurv<-1
@@ -242,7 +237,7 @@ disperse<-function(popmatrix, n.list, prob.d, spX){
 # runs the model
 
 # dem.pars is a vector with alpha, fs1, fs2, msurv, beta, prob.d
-mother<-function(n=init.pop, spX=10, spY=10, dem.pars, init.b=-5, init.p.var=10, h=0.3, gens=50, sel.time=20, plot=FALSE, hybrid=0, nT=100, trans.time=14){
+mother<-function(n=100, spX=10, spY=10, dem.pars, init.b=-5, init.p.var=10, h=0.3, gens=50, sel.time=20, plot=FALSE, hybrid=0, nT=100, trans.time=14){
 	#browser()
 	alpha<-dem.pars[1]
 	fsurv1<-dem.pars[2]
@@ -273,8 +268,8 @@ mother<-function(n=init.pop, spX=10, spY=10, dem.pars, init.b=-5, init.p.var=10,
 	}
 # write surviving population matrixes
 #if (length(pop[,1])>0) {		
-	#	write.table(pop, file=paste("survivors", i ,".csv"), sep="," ) ## save information of surviving populations
- 	#	}
+#		write.table(pop, file=paste("survivors", i ,".csv"), sep="," ) ## save information of surviving populations
+# 		}
 }
 
 plotter<-function(popmatrix, popsize, spX, spY, sel.time, gens, fid){
@@ -290,6 +285,7 @@ plotter<-function(popmatrix, popsize, spX, spY, sel.time, gens, fid){
 	hist(popmatrix[,"B"], xlim=c(-30, 30), main="Genotype")
 	#dev.off()
 }
+
 
 #mother(dem.pars=pars, init.b=-10.75, gens=50, sel.time=20, h=0.3, plot=T)
 

@@ -51,7 +51,7 @@ output
 ####GET SMART TOADS#####
 
 ### turn on write.table in Quoll_functions
-n<-2
+n<-100
 for (i in 1:n){
-  mother(dem.pars=pars, init.b=-10.75, gens=5, sel.time=20, h=0.3, plot=F)
+  mother(dem.pars=pars, init.b=-10.75, gens=50, sel.time=20, h=0.3, plot=F)
 }
